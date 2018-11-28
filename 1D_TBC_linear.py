@@ -6,10 +6,13 @@ import numpy as np
 import io
 import matplotlib.pyplot as plt
 import aux_functions as aux
+import os, sys
 
 if __name__ == '__main__':
-
-    imagefilename = "E:\\Python\\Results\\1D_stable_colorplot.png"  # ------------ The name of the image file to save results to
+    #  Result file path formation
+    fpath = os.path.dirname(sys.argv[0])
+    drv = os.path.splitdrive(fpath)
+    imagefilename = drv[0] + "\\Python\\Results\\1D_stable_linear_colorplot.png"  # ------------ The name of the image file to save results to
 
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
@@ -21,7 +24,7 @@ if __name__ == '__main__':
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
 
-    alp1 = 0  # The potential well depth
+    alp1 = 1  # The potential well depth
     alp0 = 0
 
     kappa = 0  # ------------------------------- The external field strength
@@ -155,7 +158,7 @@ if __name__ == '__main__':
 
     # Plotting the field amplitude in a color chart
     fig, gplot = plt.subplots()
-    gplot.set_title(buf.getvalue())
+    gplot.set_title(buf.getvalue(), y=1.04)
     X, Y = np.meshgrid(zplot * 1e-6, rplot * 1e-3)
     cset = gplot.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
     fig.colorbar(cset)
