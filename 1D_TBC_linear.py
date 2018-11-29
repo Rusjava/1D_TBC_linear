@@ -17,18 +17,20 @@ if __name__ == '__main__':
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
     angle = 0  # ------------------------Incidence angle, mrad
-    ZMAX = 1e3  # ----------------Waveguide length, nm
-    eps = 0.001  # Numerical precision
+    ZMAX = 1e4  # ----------------Waveguide length, nm
+    eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
     tau_int = 0.5  # ----------------------------- Longitudinal step
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
 
-    alp1 = 1  # The potential well depth
+    U0 = 0.01  # The potential well depth
+    alp1 = 4*U0
     alp0 = 0
 
-    kappa = 0  # ------------------------------- The external field strength
+    kappa = 0.001  # ------------------------------- The external field strength
+    L = ZMAX/50  # ---------------------------------- The external field extent
     K = 1  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
     model = 2  # The initial probability model
@@ -50,7 +52,6 @@ if __name__ == '__main__':
     z = tau_int * np.r_[0:NMAX]
 
     # -----------------------------------------------Potential(r)
-
     if model == 0:
         # ------------------------------PLANE WAVE
         u0 = np.exp(1j * K * math.sin(angle) * r)
@@ -58,9 +59,9 @@ if __name__ == '__main__':
         # ---------------------------------------GAUSSIAN
         u0 = np.exp(-(r - RMAX)**2 / WAIST**2 + 1j * K * math.sin(angle) * r)
     elif model == 2:
-        # The lowest bound state
-        kk = aux.ms_energy(alp1*RMIN**2/4, eps)/RMIN
-        kk1 = math.sqrt(alp1/4 - kk**2)
+        # ----------------------------------The lowest bound state
+        kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN
+        kk1 = math.sqrt(U0 - kk**2)
         u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1)
 
     # -------------------------------------
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     gg = np.zeros(NMAX,dtype=complex)
     uplot = np.zeros((muMAX,nuMAX),dtype=complex)
 
-    # ----------------------------------------------MARCHING - - old TBC
+    # ----------------------------------------------MARCHING -- old TBC
     utop[0] = u[MMAX]
     ubottom[0] = u[1]
     zplot = np.zeros(nuMAX)
@@ -105,7 +106,10 @@ if __name__ == '__main__':
     for cntn in np.r_[1:NMAX]:
 
         #  Dielectric constants with the bent term
-        alp[0:MMAX + 2] = aux.step_p(r + 2*kappa/(fq**2)*math.sin(fq*tau_int*cntn), RMAX, RMIN, alp1, alp0)
+        if cntn*tau_int < L:
+            alp[0:MMAX + 2] = aux.step_p(r + 2*kappa/(fq**2)*math.sin(fq*tau_int*cntn), RMAX, RMIN, alp1, alp0)
+        else:
+            alp[0:MMAX + 2] = aux.step_p(r, RMAX, RMIN, alp1, alp0)
 
         # Top and bottom boundary conditions
         gg[cntn] = ((c0 + 2. - 2. * yy) / (c0 - 2. + 2. * yy))**cntn
@@ -165,7 +169,7 @@ if __name__ == '__main__':
     # Plotting the initial field amplitude
     fig, gplot = plt.subplots()
     gplot.set_title(buf.getvalue(), y=1.04)
-    gplot.plot(rplot*1e-3, np.abs(u0) ** 2)
+    gplot.plot(rplot*1e-3, np.log10(np.abs(u0) ** 2))
     gplot.set_xlabel('$|u|^2$')
     gplot.set_ylabel('x, $\mu$m')
 
