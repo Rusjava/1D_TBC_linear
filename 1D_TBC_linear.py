@@ -21,7 +21,7 @@ if __name__ == '__main__':
     eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
-    tau_int = 0.5  # ----------------------------- Longitudinal step
+    tau_int = 1  # ----------------------------- Longitudinal step
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
 
@@ -29,11 +29,11 @@ if __name__ == '__main__':
     alp1 = 4*U0
     alp0 = 0
 
-    kappa = 0.001  # ------------------------------- The external field strength
+    kappa = 0  # ------------------------------- The external field strength
     L = ZMAX/50  # ---------------------------------- The external field extent
     K = 1  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
-    model = 2  # The initial probability model
+    model = 1  # The initial probability model
 
     MMAX = int(round(2. * RMAX / h))
     muMAX = math.floor((MMAX + 2) / sprsm)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         u0 = np.exp(1j * K * math.sin(angle) * r)
     elif model == 1:
         # ---------------------------------------GAUSSIAN
-        u0 = np.exp(-(r - RMAX)**2 / WAIST**2 + 1j * K * math.sin(angle) * r)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K*math.sin(angle))
     elif model == 2:
         # ----------------------------------The lowest bound state
         kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN

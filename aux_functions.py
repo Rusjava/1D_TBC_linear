@@ -1,13 +1,13 @@
 # Auxiliary function definitions
 
 import numpy as np
-import math
+import math, cmath
 
 #  Dielectric function definitions
 
 
 def parabolic_p(x, x0, rad, v1, v2):
-    """Parabolic potential. x is a ndarray; x0, rad are complex numbers; v1, v2 are real numbers"""
+    """Parabolic potential. x is a ndarray; x0, rad are real numbers; v1, v2 are complecx numbers"""
     res = np.zeros(x.size, dtype=complex)
     for i in np.r_[0:x.size]:
         if abs(x[i]-x0) > rad:
@@ -18,7 +18,7 @@ def parabolic_p(x, x0, rad, v1, v2):
 
 
 def step_p(x, x0, rad, v1, v2):
-    """Step-like potential. x is a ndarray; x0, rad are complex numbers; v1, v2 are real numbers"""
+    """Step-like potential. x is a ndarray; x0, rad are real numbers; v1, v2 are complex numbers"""
     res = np.zeros(x.size, dtype=complex)
     for i in np.r_[0:x.size]:
         if abs(x[i]-x0) > rad:
@@ -57,3 +57,10 @@ def ms_function(x, x0, rad, k, kappa):
         else:
             res[i] = math.cos(k * rad) * math.exp(kappa * (rad - abs(x0 - x[i])))
     return res
+
+
+# Exact solutions and initial functions
+
+def gaussian_f(x, t, x0, rad, K):
+    """1D Gaussian solution to Schrodinger ewqustion. x is a ndarray; t, x0, rad, K are real numbers"""
+    return np.exp(-(x-x0)**2/rad/rad + 1j*K*x)/rad/math.sqrt(math.pi)
