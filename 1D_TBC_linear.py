@@ -17,7 +17,7 @@ if __name__ == '__main__':
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
     angle = 0  # ------------------------Incidence angle, mrad
-    ZMAX = 1e4  # ----------------Waveguide length, nm
+    ZMAX = 5e3  # ----------------Waveguide length, nm
     eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
@@ -26,21 +26,21 @@ if __name__ == '__main__':
     sprsm = 1  # ----------------------------ARRAY thinning
 
     U0 = 0.01  # The potential well depth
-    alp1 = 4*U0
+    alp1 = -4*U0
     alp0 = 0
 
     kappa = 0  # ------------------------------- The external field strength
-    L = ZMAX/50  # ---------------------------------- The external field extent
+    L = ZMAX/25  # ---------------------------------- The external field extent
     K = 1  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
-    model = 1  # The initial probability model
+    model = 2  # The initial probability model
 
     MMAX = int(round(2. * RMAX / h))
     muMAX = math.floor((MMAX + 2) / sprsm)
     MMIN = int(round((RMAX - RMIN) / h))
     MMIN2 = int(round((RMAX + RMIN) / h))
     NMAX = int(round(ZMAX / tau_int))
-    WAIST = RMIN/2  # Gaussian beam waist
+    WAIST = RMIN  # Gaussian beam waist
 
     # Sparsing parameters
     if sprsn != 1:
@@ -54,15 +54,15 @@ if __name__ == '__main__':
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = np.exp(1j * K * math.sin(angle) * r)
+        u0 = np.exp(1j * K * math.sin(angle) * r)  *np.exp(1j*kappa/fq*r)
     elif model == 1:
-        # ---------------------------------------GAUSSIAN
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K*math.sin(angle))
+        # ---------------------------------------GAUSSIAN BEAM
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K*math.sin(angle)) * np.exp(1j*kappa/fq*r)
     elif model == 2:
         # ----------------------------------The lowest bound state
         kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN
         kk1 = math.sqrt(U0 - kk**2)
-        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1)
+        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(1j*kappa/fq*r)
 
     # -------------------------------------
     u = np.copy(u0)
@@ -163,8 +163,8 @@ if __name__ == '__main__':
 
     # Preparing the title string
     buf = io.StringIO()
-    buf.write("|u|: angle = %1.2f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %5.0f $\mu$m" \
-              % (angle, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
+    buf.write("|u|: eigenvalue = %1.5f,  $WAIST =$ %2.2f $\mu$m,  $AMP =$ %2.2f $\mu$m" \
+              % (kk, WAIST * 1e-3, 2*kappa/fq/fq * 1e-3))
 
     # Plotting the initial field amplitude
     fig, gplot = plt.subplots()
@@ -172,6 +172,11 @@ if __name__ == '__main__':
     gplot.plot(rplot*1e-3, np.log10(np.abs(u0) ** 2))
     gplot.set_xlabel('$|u|^2$')
     gplot.set_ylabel('x, $\mu$m')
+
+    # Preparing the title string
+    buf = io.StringIO()
+    buf.write("|u|: angle = %1.2f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %5.0f $\mu$m" \
+              % (angle, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
 
     # Plotting the field amplitude in a color chart
     fig, gplot = plt.subplots()

@@ -63,4 +63,6 @@ def ms_function(x, x0, rad, k, kappa):
 
 def gaussian_f(x, t, x0, rad, K):
     """1D Gaussian solution to Schrodinger ewqustion. x is a ndarray; t, x0, rad, K are real numbers"""
-    return np.exp(-(x-x0)**2/rad/rad + 1j*K*x)/rad/math.sqrt(math.pi)
+    rad2=rad**2+4*1j*t
+    coef=rad/cmath.sqrt(rad2)/math.sqrt(math.pi)
+    return coef * np.exp(-(x-x0-2*K*t)**2/rad2 + 1j*K*x - 1j*K**2*t)
