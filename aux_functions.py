@@ -49,7 +49,7 @@ def ms_energy(a, eps):
 
 # The main state wave function
 def ms_function(x, x0, rad, k, kappa):
-    """Eigenvector of the ground state in a rectangular potential well with the known eigenvalue"""
+    """Eigenvector of the ground state in a rectangular potential well for a given eigenvalue"""
     res = np.zeros(x.size, dtype=complex)
     for i in np.r_[0:x.size]:
         if abs(x[i]-x0) <= rad:
@@ -63,6 +63,6 @@ def ms_function(x, x0, rad, k, kappa):
 
 def gaussian_f(x, t, x0, rad, K):
     """1D Gaussian solution to Schrodinger ewqustion. x is a ndarray; t, x0, rad, K are real numbers"""
-    rad2=rad**2+4*1j*t
-    coef=rad/cmath.sqrt(rad2)/math.sqrt(math.pi)
+    rad2 = rad**2 + 4*1j*t
+    coef = 1./cmath.sqrt(rad2)/math.sqrt(math.pi)
     return coef * np.exp(-(x-x0-2*K*t)**2/rad2 + 1j*K*x - 1j*K**2*t)
