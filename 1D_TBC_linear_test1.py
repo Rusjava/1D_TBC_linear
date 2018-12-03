@@ -25,7 +25,7 @@ if __name__ == '__main__':
     sprsm = 1  # ----------------------------ARRAY thinning
 
     kappa = 0  # ------------------------------- The external field strength
-    K = 0  # The spatial frequency of the initial condition
+    K = 0.1  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
     model = 1  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
@@ -95,10 +95,11 @@ if __name__ == '__main__':
 
         # Top and bottom boundary conditions
         gg[cntn] = ((c0 + 2. - 2. * yy) / (c0 - 2. + 2. * yy))**cntn
+        betaflipped = beta[cntn-1::-1]  # Flipping the order of coefficients
 
-        SS = -np.dot(ubottom[0:cntn], beta[0:cntn]) - ((qq-1)*gg[cntn] - np.dot(gg[0:cntn], beta[0:cntn])) * ubottom[0]
-        SS1 = -np.dot(utop[0:cntn], beta[0:cntn]) + ((qq+1)*gg[cntn] + np.dot(gg[0:cntn], beta[0:cntn])) * utop[0]
-        beta[cntn] = (np.dot(phi[0:cntn], beta[0:cntn]) + phi[cntn])/(cntn+1)
+        SS = -np.dot(ubottom[0:cntn], betaflipped) - ((qq-1)*gg[cntn] - np.dot(gg[0:cntn], betaflipped)) * ubottom[0]
+        SS1 = -np.dot(utop[0:cntn], betaflipped) + ((qq+1)*gg[cntn] + np.dot(gg[0:cntn], betaflipped)) * utop[0]
+        beta[cntn] = (np.dot(phi[0:cntn], betaflipped) + phi[cntn])/(cntn+1)
 
         # Initial condition at the bottom
         c = ci
@@ -166,7 +167,7 @@ if __name__ == '__main__':
     # Plotting the exact field amplitude in a color chart
     fig1, gplot1 = plt.subplots()
     gplot1.set_title(buf.getvalue(), y=1.04)
-    cset1 = gplot1.pcolormesh(X, Y, np.log10(np.abs(uplot_exact) ** 2), cmap='jet')
+    cset1 = gplot1.pcolormesh(X, Y, np.log10(np.abs(uplot_exact-uplot) ** 2), cmap='jet')
     fig1.colorbar(cset1)
     gplot1.set_xlabel('z, mm')
     gplot1.set_ylabel('x, $\mu$m')
