@@ -28,10 +28,11 @@ if __name__ == '__main__':
     alp1 = 4*U0
     alp0 = 0
 
-    kappa = 0.001  # ------------------------------- The external field strength
+    kappa = 0  # ------------------------------- The external field strength
     K = 0  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
-    model = 2  # The initial probability model
+    model = 1  # The initial probability model
+    kk = 0
     N = 2  # Number of longitudinal oscialltions
     L = N*2*math.pi/fq  # ---------------------------------- The external field extent
 
