@@ -7,6 +7,9 @@ import io
 import matplotlib.pyplot as plt
 import aux_functions as aux
 import os, sys
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
 
 if __name__ == '__main__':
     #  Result file path formation
@@ -16,7 +19,7 @@ if __name__ == '__main__':
 
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
-    ZMAX = 5e3  # ----------------Waveguide length, nm
+    ZMAX = 1e3  # ----------------Waveguide length, nm
     eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
@@ -34,7 +37,7 @@ if __name__ == '__main__':
     model = 1  # The initial probability model
     kk = 0
     N = 2  # Number of longitudinal oscialltions
-    L = N*2*math.pi/fq  # ---------------------------------- The external field extent
+    T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 
     MMAX = int(round(2. * RMAX / h)) - 1
     muMAX = math.floor((MMAX + 2) / sprsm)
@@ -55,15 +58,15 @@ if __name__ == '__main__':
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = np.exp(1j * K * r) * np.exp(1j*kappa/fq*r)
+        u0 = np.exp(1j * K * r) * np.exp(-1j*kappa/fq*r)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(1j*kappa/fq*r)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(-1j*kappa/fq*r)
     elif model == 2:
         # ----------------------------------The lowest bound state
         kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN
         kk1 = math.sqrt(U0 - kk**2)
-        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(1j*kappa/fq*r)
+        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(-1j*kappa/fq*r)
 
     # -------------------------------------
     u = np.copy(u0)
@@ -95,6 +98,8 @@ if __name__ == '__main__':
     c0 = 2 * 1j * h**2 / tau_int
     ci = 2. - c0
     cci = 2. + c0
+    delta_x = 2 * kappa / fq ** 2  # ---------------------------------The amplitude of x oscillations
+    nrplot = 1j * kappa / fq * rplot  # ------------------------- x sparsed coordinates multiplied by a coefficient
 
     # ----------------------------------------------MARCHING - new TBC
     beta0 = -1j * 2. * cmath.sqrt(c0 - c0**2 / 4.)
@@ -107,10 +112,10 @@ if __name__ == '__main__':
     for cntn in np.r_[1:NMAX]:
 
         #  Dielectric constants with the bent term
-        if cntn*tau_int < L:
-            alp[0:MMAX + 2] = aux.step_p(r + 2*kappa/(fq**2)*math.sin(fq*tau_int*cntn), RMAX, RMIN, alp1, alp0)
+        if cntn*tau_int <= T:
+            alp[0:MMAX + 2] = aux.step_p(r - delta_x*math.sin(fq*tau_int*cntn), RMAX, RMIN, alp1, alp0)
         else:
-            alp[0:MMAX + 2] = aux.step_p(r, RMAX, RMIN, alp1, alp0)
+            alp[0:MMAX + 2] = aux.step_p(r - delta_x, RMAX, RMIN, alp1, alp0)
 
         # Top and bottom boundary conditions
         gg[cntn] = ((c0 + 2. - 2. * yy) / (c0 - 2. + 2. * yy))**cntn
@@ -152,15 +157,15 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            tmp = cmath.exp(-1j*kappa**2/fq**2/2*tau_int*cntn*fq+1j*3/4*kappa**2/fq**3*math.sin(tau_int*cntn*fq))
-            uplot[0:muMAX, nuu] = tmp*np.exp(-1j*kappa/fq*rplot*math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
+            coef = cmath.exp(1j*kappa**2/fq**2/2*tau_int*cntn*fq - 1j/4*kappa**2/fq**3*math.sin(tau_int*cntn*fq))
+            uplot[0:muMAX, nuu] = coef*np.exp(nrplot*math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))
         print(str(progress) + " %")
 
 
-    rplot = rplot - RMAX
+    rplot = rplot - RMAX - delta_x
 
     # Preparing the title string
     buf = io.StringIO()
@@ -191,5 +196,31 @@ if __name__ == '__main__':
     # Saving color plot as a raster image
     fig.savefig(imagefilename, dpi=600)
 
-    # Showing the figure
-    plt.show()
+    # ----------------------------------------Using tk library to display results
+    master = tk.Tk()
+
+    # ------------------------------The program closing function and event handling
+    def quit_program():
+        sys.exit(0)
+
+    master.protocol("WM_DELETE_WINDOW", quit_program)
+
+    # Various containers
+    topframe = tk.Frame(master)
+    topframe.pack()
+    frame = tk.Frame(master)
+    frame.pack()
+
+    # Canvas for the figure
+    canvas = FigureCanvasTkAgg(fig, master=frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    # Top label of the window
+    window_title = "The results of the PWE solution with a discrete TBC"
+    msg = tk.Label(topframe, text=window_title)
+    msg.config(bg='lightgreen', font=('times', 14, 'italic'))
+    msg.pack(side=tk.LEFT)
+
+    # The main loop
+    tk.mainloop()

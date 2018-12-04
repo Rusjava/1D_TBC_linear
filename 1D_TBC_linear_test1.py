@@ -29,7 +29,7 @@ if __name__ == '__main__':
     fq = 0.01  # Oscillation frequency
     model = 1  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
-    L = N*2*math.pi/fq  # ---------------------------------- The external field extent
+    T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 
     MMAX = int(round(2. * RMAX / h)) - 1
     muMAX = math.floor((MMAX + 2) / sprsm)
@@ -50,10 +50,10 @@ if __name__ == '__main__':
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = np.exp(1j * K * r) * np.exp(1j*kappa/fq*r)
+        u0 = np.exp(1j * K * r) * np.exp(-1j*kappa/fq*r)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(1j*kappa/fq*r)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(-1j*kappa/fq*r)
 
     # -------------------------------------
     u = np.copy(u0)
@@ -82,6 +82,8 @@ if __name__ == '__main__':
     c0 = 2 * 1j * h**2 / tau_int
     ci = 2. - c0
     cci = 2. + c0
+    delta_x = 2*kappa/fq**2  # ---------------------------------The amplitude of x oscillations
+    nrplot = 1j * kappa / fq * rplot  # ------------------------- x sparsed coordinates multiplied by a coefficient
 
     # ----------------------------------------------MARCHING - new TBC
     beta0 = -1j * 2. * cmath.sqrt(c0 - c0**2 / 4.)
@@ -129,8 +131,9 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            tmp = cmath.exp(-1j*kappa**2/fq**2/2*tau_int*cntn*fq+1j*3/4*kappa**2/fq**3*math.sin(tau_int*cntn*fq))
-            uplot[0:muMAX, nuu] = tmp*np.exp(-1j*kappa/fq*rplot*math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
+            coef = cmath.exp(3 * 1j * kappa ** 2 / fq ** 2 / 2 * tau_int * cntn * fq
+                             - 1j / 4 * kappa ** 2 / fq ** 3 * math.sin(2 * tau_int * cntn * fq))
+            uplot[0:muMAX, nuu] = coef * np.exp(nrplot * math.cos(tau_int * cntn * fq)) * u[sprsm * np.r_[0:muMAX]]
 
             # Exact solution
             if model == 0:
@@ -145,7 +148,7 @@ if __name__ == '__main__':
         progress = int(round(1.*(cntn-1) / NMAX * 100))
         print(str(progress) + " %")
 
-    rplot = rplot - RMAX
+    rplot = rplot - RMAX - delta_x*math.sin(2*T*fq)
 
     # Preparing the title string
     buf = io.StringIO()
