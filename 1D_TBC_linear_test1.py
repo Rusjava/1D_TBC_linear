@@ -24,8 +24,8 @@ if __name__ == '__main__':
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
 
-    kappa = 0  # ------------------------------- The external field strength
-    K = 0.1  # The spatial frequency of the initial condition
+    kappa = 0.001  # ------------------------------- The external field strength
+    K = 0  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
     model = 0  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     MMIN = int(round((RMAX - RMIN) / h)) - 1
     MMIN2 = int(round((RMAX + RMIN) / h)) - 1
     NMAX = int(round(ZMAX / tau_int))
-    WAIST = RMIN  # Gaussian beam waist
+    WAIST = RMIN / 2  # Gaussian beam waist
 
     # Sparsing parameters
     if sprsn != 1:
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = np.exp(1j * K * r) * np.exp(-1j*kappa/fq*r)
+        u0 = aux.planewave_f(r, 0, RMAX, K) * np.exp(-1j*kappa/fq*r)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
         u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(-1j*kappa/fq*r)
@@ -136,12 +136,15 @@ if __name__ == '__main__':
             uplot[0:muMAX, nuu] = coef * np.exp(nrplot * math.cos(tau_int * cntn * fq)) * u[sprsm * np.r_[0:muMAX]]
 
             # Exact solution
+            rplot_m = rplot - delta_x * math.sin(fq * tau_int * cntn)
             if model == 0:
                 # ------------------------------ distorted PLANE WAVE
-                uplot_exact[0:muMAX, nuu] = np.exp(1j*K*rplot - 1j*cntn*tau_int*K**2)
+                uplot_exact[0:muMAX, nuu] = coef * aux.planewave_f(rplot_m, cntn*tau_int, RMAX, K) * \
+                                            np.exp(nrplot * math.cos(tau_int * cntn * fq))
             elif model == 1:
                 # --------------------------------------- distorted GAUSSIAN BEAM
-                uplot_exact[0:muMAX, nuu] = aux.gaussian_f(rplot, cntn*tau_int, RMAX, WAIST, K)
+                uplot_exact[0:muMAX, nuu] = coef * aux.gaussian_f(rplot_m, cntn*tau_int, RMAX, WAIST, K) * \
+                                            np.exp(nrplot * math.cos(tau_int * cntn * fq))
 
             nuu = nuu + 1
         # Printing the execution progress
@@ -170,7 +173,7 @@ if __name__ == '__main__':
     # Plotting the exact field amplitude in a color chart
     fig1, gplot1 = plt.subplots()
     gplot1.set_title(buf.getvalue(), y=1.04)
-    cset1 = gplot1.pcolormesh(X, Y, np.log10(np.abs(uplot_exact-uplot) ** 2), cmap='jet')
+    cset1 = gplot1.pcolormesh(X, Y, np.log10(np.abs(uplot_exact-uplot) ** 2/np.abs(uplot) ** 2), cmap='jet')
     fig1.colorbar(cset1)
     gplot1.set_xlabel('z, mm')
     gplot1.set_ylabel('x, $\mu$m')

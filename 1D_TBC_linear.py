@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = np.exp(1j * K * r) * np.exp(-1j*kappa/fq*r)
+        u0 = aux.planewave_f(r, 0, RMAX, K) * np.exp(-1j*kappa/fq*r)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
         u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(-1j*kappa/fq*r)
