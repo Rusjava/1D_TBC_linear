@@ -31,7 +31,7 @@ if __name__ == '__main__':
     alp1 = 4*U0
     alp0 = 0
 
-    kappa = 0  # ------------------------------- The external field strength
+    kappa = 0.001  # ------------------------------- The external field strength
     K = 0  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
     model = 1  # The initial probability model
@@ -157,8 +157,8 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            coef = cmath.exp(1j*kappa**2/fq**2/2*tau_int*cntn*fq - 1j/4*kappa**2/fq**3*math.sin(tau_int*cntn*fq))
-            uplot[0:muMAX, nuu] = coef*np.exp(nrplot*math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
+            coef = cmath.exp(-1j*kappa**2/fq**2/2*tau_int*cntn*fq + 3*1j/4*kappa**2/fq**3*math.sin(2*tau_int*cntn*fq))
+            uplot[0:muMAX, nuu] = coef * np.exp(nrplot*math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))

@@ -27,7 +27,7 @@ if __name__ == '__main__':
     kappa = 0  # ------------------------------- The external field strength
     K = 0.1  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
-    model = 1  # The initial probability model
+    model = 0  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 
@@ -131,16 +131,16 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            coef = cmath.exp(3 * 1j * kappa ** 2 / fq ** 2 / 2 * tau_int * cntn * fq
-                             - 1j / 4 * kappa ** 2 / fq ** 3 * math.sin(2 * tau_int * cntn * fq))
+            coef = cmath.exp(-1j * kappa ** 2 / fq ** 2 / 2 * tau_int * cntn * fq
+                             + 3*1j / 4 * kappa ** 2 / fq ** 3 * math.sin(2 * tau_int * cntn * fq))
             uplot[0:muMAX, nuu] = coef * np.exp(nrplot * math.cos(tau_int * cntn * fq)) * u[sprsm * np.r_[0:muMAX]]
 
             # Exact solution
             if model == 0:
-                # ------------------------------PLANE WAVE
+                # ------------------------------ distorted PLANE WAVE
                 uplot_exact[0:muMAX, nuu] = np.exp(1j*K*rplot - 1j*cntn*tau_int*K**2)
             elif model == 1:
-                # ---------------------------------------GAUSSIAN BEAM
+                # --------------------------------------- distorted GAUSSIAN BEAM
                 uplot_exact[0:muMAX, nuu] = aux.gaussian_f(rplot, cntn*tau_int, RMAX, WAIST, K)
 
             nuu = nuu + 1
