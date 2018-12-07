@@ -69,4 +69,4 @@ def gaussian_f(x, t, x0, rad, K):
 
 def planewave_f(x, t, x0, K):
     """1D plane wave solution to Schrodinger ewqustion. x is a ndarray; t, x0, K are real numbers"""
-    return np.exp(1j*K*(x-x0) -1j*K**2*t)
+    return np.exp(1j*K*(x-x0) - 1j*K**2*t)
