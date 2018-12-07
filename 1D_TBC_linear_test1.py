@@ -27,7 +27,7 @@ if __name__ == '__main__':
     kappa = 0.001  # ------------------------------- The external field strength
     K = 0  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
-    model = 0  # The initial probability model
+    model = 1  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 
@@ -51,10 +51,10 @@ if __name__ == '__main__':
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = aux.planewave_f(r, 0, RMAX, K) * np.exp(-1j*K1*r)
+        u0 = aux.planewave_f(r, 0, RMAX, K - K1)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(-1j*K1*r)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - K1)
 
     # -------------------------------------
     u = np.copy(u0)
@@ -139,8 +139,7 @@ if __name__ == '__main__':
             # Exact solution
             if model == 0:
                 # ------------------------------ distorted PLANE WAVE
-                uplot_exact[0:muMAX, nuu] = coef * aux.planewave_f(rplot - delta_x*math.sin(cntn*tau_int*fq),
-                                                                   cntn*tau_int, RMAX, K - K1)
+                uplot_exact[0:muMAX, nuu] = coef * aux.planewave_f(rplot, cntn*tau_int, RMAX, K - K1)
             elif model == 1:
                 # --------------------------------------- distorted GAUSSIAN BEAM
                 uplot_exact[0:muMAX, nuu] = coef * aux.gaussian_f(rplot, cntn*tau_int, RMAX, WAIST, K - K1)
@@ -172,7 +171,7 @@ if __name__ == '__main__':
     # Plotting the exact field amplitude in a color chart
     fig1, gplot1 = plt.subplots()
     gplot1.set_title(buf.getvalue(), y=1.04)
-    cset1 = gplot1.pcolormesh(X, Y, np.log10(np.abs(uplot_exact-uplot) ** 2/np.abs(uplot) ** 2), cmap='jet')
+    cset1 = gplot1.pcolormesh(X, Y, np.log10(np.abs(uplot_exact - uplot) ** 2/np.abs(uplot) ** 2), cmap='jet')
     fig1.colorbar(cset1)
     gplot1.set_xlabel('z, mm')
     gplot1.set_ylabel('x, $\mu$m')

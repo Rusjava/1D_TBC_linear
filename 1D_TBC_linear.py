@@ -54,19 +54,20 @@ if __name__ == '__main__':
 
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
+    K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
 
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = aux.planewave_f(r, 0, RMAX, K) * np.exp(-1j*kappa/fq*r)
+        u0 = aux.planewave_f(r, 0, RMAX, K - K1)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K) * np.exp(-1j*kappa/fq*r)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - K1)
     elif model == 2:
         # ----------------------------------The lowest bound state
         kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN
         kk1 = math.sqrt(U0 - kk**2)
-        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(-1j*kappa/fq*r)
+        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(-1j*K1*(r-RMAX))
 
     # -------------------------------------
     u = np.copy(u0)
@@ -99,15 +100,14 @@ if __name__ == '__main__':
     ci = 2. - c0
     cci = 2. + c0
     delta_x = 2 * kappa / fq ** 2  # ---------------------------------The amplitude of x oscillations
-    nrplot = 1j * kappa / fq * rplot  # ------------------------- x sparsed coordinates multiplied by a coefficient
 
     # ----------------------------------------------MARCHING - new TBC
     beta0 = -1j * 2. * cmath.sqrt(c0 - c0**2 / 4.)
     phi = -1. / 2. - (-1.)**np.r_[0:NMAX+1] + ((-1.)**np.r_[0:NMAX+1]) / 2. * ((1. + c0 / 4.) / (1. - c0 / 4.))**np.r_[1:NMAX+2]
     beta[0] = phi[0]
     gg[0] = 1
-    qq = -cmath.sin(K * h) / cmath.sqrt(c0 - c0**2 / 4.)
-    yy = cmath.cos(K * h)
+    qq = -cmath.sin((K - K1)* h) / cmath.sqrt(c0 - c0**2 / 4.)
+    yy = cmath.cos((K - K1) * h)
 
     for cntn in np.r_[1:NMAX]:
 
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
             coef = cmath.exp(-1j*kappa**2/fq**2/2*tau_int*cntn*fq + 3*1j/4*kappa**2/fq**3*math.sin(2*tau_int*cntn*fq))
-            uplot[0:muMAX, nuu] = coef * np.exp(nrplot*math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
+            uplot[0:muMAX, nuu] = coef * np.exp(1j * K1 * rplot * math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))
