@@ -181,12 +181,12 @@ if __name__ == '__main__':
 
     # Preparing the title string
     buf = io.StringIO()
-    buf.write("|u|: K = %1.5f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %5.0f $\mu$m" \
+    buf.write("$|u|^2$: K = %1.5f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %3.0f $\mu$m" \
               % (K, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
 
     # Plotting the field amplitude in a color chart
     fig, gplot = plt.subplots()
-    gplot.set_title(buf.getvalue(), y=1.04)
+    gplot.set_title(buf.getvalue(), y=1.04, x=0.6)
     X, Y = np.meshgrid(zplot * 1e-6, rplot * 1e-3)
     cset = gplot.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
     fig.colorbar(cset)
@@ -207,20 +207,20 @@ if __name__ == '__main__':
 
     # Various containers
     topframe = tk.Frame(master)
-    topframe.pack()
     frame = tk.Frame(master)
-    frame.pack()
+    topframe.pack(fill=tk.BOTH)
+    frame.pack(fill=tk.BOTH)
 
     # Canvas for the figure
     canvas = FigureCanvasTkAgg(fig, master=frame)
     canvas.draw()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
 
     # Top label of the window
     window_title = "The results of the PWE solution with a discrete TBC"
     msg = tk.Label(topframe, text=window_title)
     msg.config(bg='lightgreen', font=('times', 14, 'italic'))
-    msg.pack(side=tk.LEFT)
+    msg.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
     # The main loop
     tk.mainloop()
