@@ -27,7 +27,7 @@ if __name__ == '__main__':
     kappa = 0.001  # ------------------------------- The external field strength
     K = 0  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
-    model = 1  # The initial probability model
+    model = 0  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 
@@ -46,15 +46,16 @@ if __name__ == '__main__':
 
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
-    K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
+    K1 = kappa / fq # ------------------------------------Additional spatial frequency related to the linear potential
+    G0 = aux.sin_G(0, T*fq, K1)
 
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = aux.planewave_f(r, 0, RMAX, K - K1)
+        u0 = aux.planewave_f(r, 0, RMAX, K - G0)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - K1)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - G0)
 
     # -------------------------------------
     u = np.copy(u0)
@@ -83,15 +84,14 @@ if __name__ == '__main__':
     c0 = 2 * 1j * h**2 / tau_int
     ci = 2. - c0
     cci = 2. + c0
-    delta_x = 2*kappa/fq**2  # ---------------------------------The amplitude of x oscillations
 
     # ----------------------------------------------MARCHING - new TBC
     beta0 = -1j * 2. * cmath.sqrt(c0 - c0**2 / 4.)
     phi = -1. / 2. - (-1.)**np.r_[0:NMAX+1] + ((-1.)**np.r_[0:NMAX+1]) / 2. * ((1. + c0 / 4.) / (1. - c0 / 4.))**np.r_[1:NMAX+2]
     beta[0] = phi[0]
     gg[0] = 1
-    qq = 2*1j*math.sin((K - K1) * h) / beta0
-    yy = math.cos((K - K1) * h)
+    qq = 2*1j*math.sin((K - G0) * h) / beta0
+    yy = math.cos((K - G0) * h)
 
     for cntn in np.r_[1:NMAX]:
 
@@ -131,25 +131,23 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            coef = cmath.exp(-1j * kappa ** 2 / fq ** 2 / 2 * tau_int * cntn * fq
-                             + 3*1j / 4 * kappa ** 2 / fq ** 3 * math.sin(2 * tau_int * cntn * fq))\
-                   * np.exp(1j * K1 * rplot * math.cos(tau_int * cntn * fq))
+            coef = cmath.exp(-1j * aux.sin_phi(cntn*tau_int, T*fq, K1**2)) * np.exp(-1j * rplot * aux.sin_G(cntn*tau_int, T*fq, K1))
             uplot[0:muMAX, nuu] = coef * u[sprsm * np.r_[0:muMAX]]
 
             # Exact solution
             if model == 0:
                 # ------------------------------ distorted PLANE WAVE
-                uplot_exact[0:muMAX, nuu] = coef * aux.planewave_f(rplot, cntn*tau_int, RMAX, K - K1)
+                uplot_exact[0:muMAX, nuu] = coef * aux.planewave_f(rplot, cntn*tau_int, RMAX, K - G0)
             elif model == 1:
                 # --------------------------------------- distorted GAUSSIAN BEAM
-                uplot_exact[0:muMAX, nuu] = coef * aux.gaussian_f(rplot, cntn*tau_int, RMAX, WAIST, K - K1)
+                uplot_exact[0:muMAX, nuu] = coef * aux.gaussian_f(rplot, cntn*tau_int, RMAX, WAIST, K - G0)
 
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))
         print(str(progress) + " %")
 
-    rplot = rplot - RMAX - delta_x*math.sin(T*fq)
+    rplot = rplot - RMAX
 
     # Preparing the title string
     buf = io.StringIO()

@@ -28,10 +28,25 @@ def step_p(x, x0, rad, v1, v2):
     return res
 
 
-# Temporal oscillations
-def sin_temp(t, fq):
-    """Oscillating potential field. t is a ndarray; fq (frequency) is real number"""
-    return np.sin(fq*t)
+# Sinusoidal temporal oscillations
+def sin_f(t):
+    """Oscillating potential field. t is a real"""
+    return math.sin(t)
+
+
+def sin_G(t, T, coef):
+    """Oscillating potential field. t, T and coef are real numbers"""
+    return -coef * (math.cos(t) - math.cos(T))
+
+
+def sin_F(t, T, coef):
+    """Oscillating potential field. t is a ndarray; T and coef are real number"""
+    return -coef * (np.sin(t) - t*np.cos(T))
+
+
+def sin_phi(t, T, coef):
+    """Oscillating potential field. t is a ndarray; T and coef are real number"""
+    return coef * (t*(1.0/2 - math.cos(T)**2 + 2*math.cos(T)*math.sin(t)) - 3./4.*math.sin(2*t))
 
 
 # The main state energy level
