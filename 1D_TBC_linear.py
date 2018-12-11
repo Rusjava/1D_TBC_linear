@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
-    ZMAX = 3e3  # ----------------Waveguide length, nm
+    ZMAX = 1e4  # ----------------Waveguide length, nm
     eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
@@ -27,11 +27,11 @@ if __name__ == '__main__':
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
 
-    U0 = 0.1  # The potential well depth
+    U0 = 0.02  # The potential well depth
     alp1 = 4*U0
     alp0 = 0
 
-    kappa = 0.0001  # ------------------------------- The external field strength
+    kappa = 0.001  # ------------------------------- The external field strength
     K = 0  # The spatial frequency of the initial condition
     fq = 0.01  # Longitudinal oscillation frequency
     model = 2  # The initial probability model
@@ -44,9 +44,10 @@ if __name__ == '__main__':
     K2 = 2 * K1 / fq
     G0 = aux.sin_G(0, T_fq, K1)
     delta_max = aux.sin_F(T * fq, T_fq, K2)
+    N_delta_max = int(math.floor(delta_max/h))
 
     MMAX = int(round((2. * RMAX + delta_max) / h)) - 1
-    muMAX = math.floor((MMAX + 2) / sprsm)
+    muMAX = int(round(2. * RMAX / h/ sprsm)) - 1  # The dimension of sparsed matrices in x direction
     MMIN = int(round((RMAX - RMIN) / h)) - 1
     MMIN2 = int(round((RMAX + RMIN) / h)) - 1
     NMAX = int(round(ZMAX / tau_int))
@@ -164,10 +165,12 @@ if __name__ == '__main__':
             if cntn * tau_int <= T:
                 coef = cmath.exp(-1j * aux.sin_phi(cntn * tau_fq, T_fq, K1 ** 2)) \
                     * np.exp(-1j * (rplot - RMAX) * aux.sin_G(cntn * tau_fq, T_fq, K1))
+                uplot[0:muMAX, nuu] = coef * u[sprsm * np.r_[0:muMAX] \
+                                               + int(math.floor(aux.sin_F(cntn * tau_fq, T_fq, K2 / h)))]
             else:
                 coef = cmath.exp(-1j * aux.sin_phi(T_fq, T_fq, K1 ** 2)) \
                        * np.exp(-1j * (rplot - RMAX) * aux.sin_G(T_fq, T_fq, K1))
-            uplot[0:muMAX, nuu] = coef * u[sprsm * np.r_[0:muMAX]]
+                uplot[0:muMAX, nuu] = coef * u[sprsm * np.r_[0:muMAX] + N_delta_max]
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))
@@ -182,9 +185,9 @@ if __name__ == '__main__':
               % (kk, WAIST * 1e-3, 2*kappa/fq/fq * 1e-3))
 
     # Plotting the initial field amplitude
-    fig1, gplot1 = plt.subplots()
+    fig1, gplot1 = plt.subplots(figsize=(3, 3), dpi=80)
     gplot1.set_title(buf.getvalue(), y=1.04)
-    gplot1.plot(rplot*1e-3, np.log10(np.abs(u0) ** 2))
+    gplot1.plot(rplot*1e-3, np.log10(np.abs(u0[sprsm * np.r_[0:muMAX]]) ** 2))
     gplot1.set_xlabel('$|u|^2$')
     gplot1.set_ylabel('x, $\mu$m')
 
@@ -194,7 +197,7 @@ if __name__ == '__main__':
               % (K, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
 
     # Plotting the field amplitude in a color chart
-    fig2, gplot2 = plt.subplots()
+    fig2, gplot2 = plt.subplots(figsize=(3, 3), dpi=80)
     gplot2.set_title(buf.getvalue(), y=1.04, x=0.6)
     X, Y = np.meshgrid(zplot * 1e-6, rplot * 1e-3)
     cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
@@ -202,8 +205,6 @@ if __name__ == '__main__':
     gplot2.set_xlabel('z, mm')
     gplot2.set_ylabel('x, $\mu$m')
 
-    # Saving color plot as a raster image
-    fig2.savefig(imagefilename, dpi=600)
 
     # ----------------------------------------Using tk library to display results
     master = tk.Tk()
@@ -212,7 +213,31 @@ if __name__ == '__main__':
     def quit_program():
         sys.exit(0)
 
+    # ------------------------------The color plot function saving the main color plot
+    def save_color_plot():
+        """Saves the main color plot as a raster image"""
+        fig2.savefig(imagefilename, dpi=600)
+
+    # ------------------------------Showing about popup message
+    def show_about_message():
+        """Saves the main color plot as a raster image"""
+        pass
+
     master.protocol("WM_DELETE_WINDOW", quit_program)
+
+
+    # Creating the main menu bar
+    mainmenu = tk.Menu(master)
+    filemenu = tk.Menu(mainmenu, tearoff=0)
+    filemenu.add_command(label="Save color plot", command=save_color_plot)
+    filemenu.add_separator()
+    filemenu.add_command(label="Exit", command=quit_program)
+    helpmenu = tk.Menu(mainmenu, tearoff=0)
+    helpmenu.add_command(label="About", command=show_about_message)
+    mainmenu.add_cascade(label="File",menu=filemenu)
+    mainmenu.add_cascade(label="Help", menu=helpmenu)
+
+    helpmenu = tk.Menu(mainmenu, tearoff=0)
 
     # Various containers
     topframe = tk.Frame(master)
