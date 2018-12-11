@@ -20,14 +20,14 @@ if __name__ == '__main__':
     eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
-    tau_int = 1  # ----------------------------- Longitudinal step
+    tau_int = 0.5  # ----------------------------- Longitudinal step
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
 
     kappa = 0.001  # ------------------------------- The external field strength
     K = 0.01  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
-    model = 0  # The initial probability model
+    model = 1  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 
@@ -92,6 +92,7 @@ if __name__ == '__main__':
     gg[0] = 1
     qq = 2*1j*math.sin((K + G0) * h) / beta0
     yy = math.cos((K + G0) * h)
+    tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
 
     for cntn in np.r_[1:NMAX]:
 
@@ -131,7 +132,8 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            coef = cmath.exp(-1j * aux.sin_phi(cntn*tau_int, T*fq, K1**2)) * np.exp(-1j * rplot * aux.sin_G(cntn*tau_int, T*fq, K1))
+            coef = cmath.exp(-1j * aux.sin_phi(cntn*tau_fq, T*fq, K1**2)) \
+                   * np.exp(-1j * (rplot - RMAX) * aux.sin_G(cntn*tau_fq, T*fq, K1))
             uplot[0:muMAX, nuu] = coef * u[sprsm * np.r_[0:muMAX]]
 
             # Exact solution

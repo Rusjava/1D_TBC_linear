@@ -22,7 +22,7 @@ if __name__ == '__main__':
     ZMAX = 3e3  # ----------------Waveguide length, nm
     eps = 0.0001  # Numerical precision
 
-    h = 0.5  # ----------------------------- Transversal step
+    h = 1  # ----------------------------- Transversal step
     tau_int = 1  # ----------------------------- Longitudinal step
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
@@ -33,19 +33,13 @@ if __name__ == '__main__':
 
     kappa = 0.0001  # ------------------------------- The external field strength
     K = 0  # The spatial frequency of the initial condition
-    fq = 0.01  # Longitudinal oscillation frequency
+    fq = 0.01  # Oscillation frequency
     model = 2  # The initial probability model
     kk = 0
     N = 1  # Number of longitudinal oscialltions
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
-    T_fq = T * fq  # ------------------------------------- Normalized longitudinal field length
-    tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
-    K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
-    K2 = 2 * K1 / fq
-    G0 = aux.sin_G(0, T_fq, K1)
-    delta_max = aux.sin_F(T * fq, T_fq, K2)
 
-    MMAX = int(round((2. * RMAX + delta_max) / h)) - 1
+    MMAX = int(round(2. * RMAX / h)) - 1
     muMAX = math.floor((MMAX + 2) / sprsm)
     MMIN = int(round((RMAX - RMIN) / h)) - 1
     MMIN2 = int(round((RMAX + RMIN) / h)) - 1
@@ -60,19 +54,20 @@ if __name__ == '__main__':
 
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
+    K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
 
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = aux.planewave_f(r, 0, RMAX, K + G0)
+        u0 = aux.planewave_f(r, 0, RMAX, K - K1)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K + G0)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - K1)
     elif model == 2:
         # ----------------------------------The lowest bound state
         kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN
         kk1 = math.sqrt(U0 - kk**2)
-        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(1j*G0*(r-RMAX))
+        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(-1j*K1*(r-RMAX))
 
     # -------------------------------------
     u = np.copy(u0)
@@ -104,22 +99,23 @@ if __name__ == '__main__':
     c0 = 2 * 1j * h**2 / tau_int
     ci = 2. - c0
     cci = 2. + c0
+    delta_x = 2 * kappa / fq ** 2  # ---------------------------------The amplitude of x oscillations
 
     # ----------------------------------------------MARCHING - new TBC
     beta0 = -1j * 2. * cmath.sqrt(c0 - c0**2 / 4.)
     phi = -1. / 2. - (-1.)**np.r_[0:NMAX+1] + ((-1.)**np.r_[0:NMAX+1]) / 2. * ((1. + c0 / 4.) / (1. - c0 / 4.))**np.r_[1:NMAX+2]
     beta[0] = phi[0]
     gg[0] = 1
-    qq = -cmath.sin((K + G0)* h) / cmath.sqrt(c0 - c0**2 / 4.)
-    yy = cmath.cos((K + G0) * h)
+    qq = -cmath.sin((K - K1)* h) / cmath.sqrt(c0 - c0**2 / 4.)
+    yy = cmath.cos((K - K1) * h)
 
     for cntn in np.r_[1:NMAX]:
 
         #  Dielectric constants with the bent term
         if cntn*tau_int <= T:
-            alp[0:MMAX + 2] = aux.step_p(r - aux.sin_F(cntn*tau_fq, T_fq, K2), RMAX, RMIN, alp1, alp0)
+            alp[0:MMAX + 2] = aux.step_p(r - delta_x*math.sin(fq*tau_int*cntn), RMAX, RMIN, alp1, alp0)
         else:
-            alp[0:MMAX + 2] = aux.step_p(r - delta_max, RMAX, RMIN, alp1, alp0)
+            alp[0:MMAX + 2] = aux.step_p(r - delta_x, RMAX, RMIN, alp1, alp0)
 
         # Top and bottom boundary conditions
         gg[cntn] = ((c0 + 2. - 2. * yy) / (c0 - 2. + 2. * yy))**cntn
@@ -161,20 +157,15 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            if cntn * tau_int <= T:
-                coef = cmath.exp(-1j * aux.sin_phi(cntn * tau_fq, T_fq, K1 ** 2)) \
-                    * np.exp(-1j * (rplot - RMAX) * aux.sin_G(cntn * tau_fq, T_fq, K1))
-            else:
-                coef = cmath.exp(-1j * aux.sin_phi(T_fq, T_fq, K1 ** 2)) \
-                       * np.exp(-1j * (rplot - RMAX) * aux.sin_G(T_fq, T_fq, K1))
-            uplot[0:muMAX, nuu] = coef * u[sprsm * np.r_[0:muMAX]]
+            coef = cmath.exp(-1j*kappa**2/fq**2/2*tau_int*cntn*fq + 3*1j/4*kappa**2/fq**3*math.sin(2*tau_int*cntn*fq))
+            uplot[0:muMAX, nuu] = coef * np.exp(1j * K1 * rplot * math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))
         print(str(progress) + " %")
 
 
-    rplot = rplot - RMAX
+    rplot = rplot - RMAX - delta_x
 
     # Preparing the title string
     buf = io.StringIO()
@@ -182,11 +173,11 @@ if __name__ == '__main__':
               % (kk, WAIST * 1e-3, 2*kappa/fq/fq * 1e-3))
 
     # Plotting the initial field amplitude
-    fig1, gplot1 = plt.subplots()
-    gplot1.set_title(buf.getvalue(), y=1.04)
-    gplot1.plot(rplot*1e-3, np.log10(np.abs(u0) ** 2))
-    gplot1.set_xlabel('$|u|^2$')
-    gplot1.set_ylabel('x, $\mu$m')
+    fig, gplot = plt.subplots()
+    gplot.set_title(buf.getvalue(), y=1.04)
+    gplot.plot(rplot*1e-3, np.log10(np.abs(u0) ** 2))
+    gplot.set_xlabel('$|u|^2$')
+    gplot.set_ylabel('x, $\mu$m')
 
     # Preparing the title string
     buf = io.StringIO()
@@ -194,16 +185,16 @@ if __name__ == '__main__':
               % (K, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
 
     # Plotting the field amplitude in a color chart
-    fig2, gplot2 = plt.subplots()
-    gplot2.set_title(buf.getvalue(), y=1.04, x=0.6)
+    fig, gplot = plt.subplots()
+    gplot.set_title(buf.getvalue(), y=1.04, x=0.6)
     X, Y = np.meshgrid(zplot * 1e-6, rplot * 1e-3)
-    cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
-    fig2.colorbar(cset)
-    gplot2.set_xlabel('z, mm')
-    gplot2.set_ylabel('x, $\mu$m')
+    cset = gplot.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
+    fig.colorbar(cset)
+    gplot.set_xlabel('z, mm')
+    gplot.set_ylabel('x, $\mu$m')
 
     # Saving color plot as a raster image
-    fig2.savefig(imagefilename, dpi=600)
+    fig.savefig(imagefilename, dpi=600)
 
     # ----------------------------------------Using tk library to display results
     master = tk.Tk()
@@ -217,16 +208,13 @@ if __name__ == '__main__':
     # Various containers
     topframe = tk.Frame(master)
     frame = tk.Frame(master)
-    topframe.pack(fill=tk.BOTH)
+    topframe.pack(fill=tk.BOTH, expand=1)
     frame.pack(fill=tk.BOTH)
 
     # Canvas for the figure
-    canvas1 = FigureCanvasTkAgg(fig1, master=frame)
-    canvas1.draw()
-    canvas1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-    canvas2 = FigureCanvasTkAgg(fig2, master=frame)
-    canvas2.draw()
-    canvas2.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
+    canvas = FigureCanvasTkAgg(fig, master=frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
 
     # Top label of the window
     window_title = "The results of the PWE solution with a discrete TBC"

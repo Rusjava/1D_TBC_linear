@@ -41,7 +41,7 @@ def sin_G(t, T, coef):
 
 def sin_F(t, T, coef):
     """Oscillating potential field. t is a ndarray; T and coef are real number"""
-    return -coef * (np.sin(t) - t*np.cos(T))
+    return -coef * (math.sin(t) - t*math.cos(T))
 
 
 def sin_phi(t, T, coef):
