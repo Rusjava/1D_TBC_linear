@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
-    ZMAX = 1e3  # ----------------Waveguide length, nm
+    ZMAX = 5e3  # ----------------Waveguide length, nm
     eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
@@ -27,13 +27,13 @@ if __name__ == '__main__':
     sprsn = 2  # ----------------------------ARRAY thinning(long range)
     sprsm = 1  # ----------------------------ARRAY thinning
 
-    U0 = 0.01  # The potential well depth
+    U0 = 0  # The potential well depth
     alp1 = 4*U0
     alp0 = 0
 
     kappa = 0.001  # ------------------------------- The external field strength
     K = 0  # The spatial frequency of the initial condition
-    fq = 0.01  # Oscillation frequency
+    fq = 0.01  # Longitudinal oscillation frequency
     model = 1  # The initial probability model
     kk = 0
     N = 2  # Number of longitudinal oscialltions
@@ -55,19 +55,22 @@ if __name__ == '__main__':
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
     K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
+    K2 = 2 * K1 / fq
+    G0 = aux.sin_G(0, T*fq, K1)
+    delta_max = aux.sin_F(T, T*fq, K2)
 
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = aux.planewave_f(r, 0, RMAX, K - K1)
+        u0 = aux.planewave_f(r, 0, RMAX, K - G0)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - K1)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - G0)
     elif model == 2:
         # ----------------------------------The lowest bound state
         kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN
         kk1 = math.sqrt(U0 - kk**2)
-        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(-1j*K1*(r-RMAX))
+        u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(-1j*G0*(r-RMAX))
 
     # -------------------------------------
     u = np.copy(u0)
@@ -99,23 +102,22 @@ if __name__ == '__main__':
     c0 = 2 * 1j * h**2 / tau_int
     ci = 2. - c0
     cci = 2. + c0
-    delta_x = 2 * kappa / fq ** 2  # ---------------------------------The amplitude of x oscillations
 
     # ----------------------------------------------MARCHING - new TBC
     beta0 = -1j * 2. * cmath.sqrt(c0 - c0**2 / 4.)
     phi = -1. / 2. - (-1.)**np.r_[0:NMAX+1] + ((-1.)**np.r_[0:NMAX+1]) / 2. * ((1. + c0 / 4.) / (1. - c0 / 4.))**np.r_[1:NMAX+2]
     beta[0] = phi[0]
     gg[0] = 1
-    qq = -cmath.sin((K - K1)* h) / cmath.sqrt(c0 - c0**2 / 4.)
-    yy = cmath.cos((K - K1) * h)
+    qq = -cmath.sin((K - G0)* h) / cmath.sqrt(c0 - c0**2 / 4.)
+    yy = cmath.cos((K - G0) * h)
 
     for cntn in np.r_[1:NMAX]:
 
         #  Dielectric constants with the bent term
         if cntn*tau_int <= T:
-            alp[0:MMAX + 2] = aux.step_p(r - delta_x*math.sin(fq*tau_int*cntn), RMAX, RMIN, alp1, alp0)
+            alp[0:MMAX + 2] = aux.step_p(r - aux.sin_F(cntn*tau_int, T*fq, K2), RMAX, RMIN, alp1, alp0)
         else:
-            alp[0:MMAX + 2] = aux.step_p(r - delta_x, RMAX, RMIN, alp1, alp0)
+            alp[0:MMAX + 2] = aux.step_p(r - delta_max, RMAX, RMIN, alp1, alp0)
 
         # Top and bottom boundary conditions
         gg[cntn] = ((c0 + 2. - 2. * yy) / (c0 - 2. + 2. * yy))**cntn
@@ -157,15 +159,16 @@ if __name__ == '__main__':
         if (cntn-1) / sprsn - math.floor((cntn-1) / sprsn) == 0:
             zplot[nuu] = z[cntn-1]
             #  Multiplying by the phase factor
-            coef = cmath.exp(-1j*kappa**2/fq**2/2*tau_int*cntn*fq + 3*1j/4*kappa**2/fq**3*math.sin(2*tau_int*cntn*fq))
-            uplot[0:muMAX, nuu] = coef * np.exp(1j * K1 * rplot * math.cos(tau_int*cntn*fq))*u[sprsm * np.r_[0:muMAX]]
+            coef = cmath.exp(-1j * aux.sin_phi(cntn * tau_int, T * fq, K1 ** 2)) \
+                   * np.exp(-1j * rplot * aux.sin_G(cntn * tau_int, T * fq, K1))
+            uplot[0:muMAX, nuu] = coef * u[sprsm * np.r_[0:muMAX]]
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))
         print(str(progress) + " %")
 
 
-    rplot = rplot - RMAX - delta_x
+    rplot = rplot - RMAX
 
     # Preparing the title string
     buf = io.StringIO()

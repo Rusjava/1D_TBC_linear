@@ -25,7 +25,7 @@ if __name__ == '__main__':
     sprsm = 1  # ----------------------------ARRAY thinning
 
     kappa = 0.001  # ------------------------------- The external field strength
-    K = 0  # The spatial frequency of the initial condition
+    K = 0.01  # The spatial frequency of the initial condition
     fq = 0.01  # Oscillation frequency
     model = 0  # The initial probability model
     N = 2  # Number of longitudinal oscialltions
@@ -52,10 +52,10 @@ if __name__ == '__main__':
     # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
-        u0 = aux.planewave_f(r, 0, RMAX, K - G0)
+        u0 = aux.planewave_f(r, 0, RMAX, K + G0)
     elif model == 1:
         # ---------------------------------------GAUSSIAN BEAM
-        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K - G0)
+        u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K + G0)
 
     # -------------------------------------
     u = np.copy(u0)
@@ -90,8 +90,8 @@ if __name__ == '__main__':
     phi = -1. / 2. - (-1.)**np.r_[0:NMAX+1] + ((-1.)**np.r_[0:NMAX+1]) / 2. * ((1. + c0 / 4.) / (1. - c0 / 4.))**np.r_[1:NMAX+2]
     beta[0] = phi[0]
     gg[0] = 1
-    qq = 2*1j*math.sin((K - G0) * h) / beta0
-    yy = math.cos((K - G0) * h)
+    qq = 2*1j*math.sin((K + G0) * h) / beta0
+    yy = math.cos((K + G0) * h)
 
     for cntn in np.r_[1:NMAX]:
 
@@ -137,10 +137,10 @@ if __name__ == '__main__':
             # Exact solution
             if model == 0:
                 # ------------------------------ distorted PLANE WAVE
-                uplot_exact[0:muMAX, nuu] = coef * aux.planewave_f(rplot, cntn*tau_int, RMAX, K - G0)
+                uplot_exact[0:muMAX, nuu] = coef * aux.planewave_f(rplot, cntn*tau_int, RMAX, K + G0)
             elif model == 1:
                 # --------------------------------------- distorted GAUSSIAN BEAM
-                uplot_exact[0:muMAX, nuu] = coef * aux.gaussian_f(rplot, cntn*tau_int, RMAX, WAIST, K - G0)
+                uplot_exact[0:muMAX, nuu] = coef * aux.gaussian_f(rplot, cntn*tau_int, RMAX, WAIST, K + G0)
 
             nuu = nuu + 1
         # Printing the execution progress
