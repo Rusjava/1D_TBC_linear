@@ -1,5 +1,6 @@
 # Implementation of the unconditionally stable TBC for Schrodinger equation with linear oscillating potential
 
+# Python inports
 import math
 import cmath
 import numpy as np
@@ -7,15 +8,17 @@ import io
 import matplotlib.pyplot as plt
 import aux_functions as aux
 import os, sys
+
+# Tkinter imports
 import tkinter as tk
+import tkinter.filedialog as fd
+import tkinter.messagebox as tkm
+
+# External imports
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 
 if __name__ == '__main__':
-    #  Result file path formation
-    fpath = os.path.dirname(sys.argv[0])
-    drv = os.path.splitdrive(fpath)
-    imagefilename = drv[0] + "\\Python\\Results\\1D_stable_linear_colorplot.png"  # ------------ The name of the image file to save results to
 
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
@@ -185,7 +188,7 @@ if __name__ == '__main__':
               % (kk, WAIST * 1e-3, 2*kappa/fq/fq * 1e-3))
 
     # Plotting the initial field amplitude
-    fig1, gplot1 = plt.subplots(figsize=(3, 3), dpi=80)
+    fig1, gplot1 = plt.subplots(figsize=(6, 6), dpi=80)
     gplot1.set_title(buf.getvalue(), y=1.04)
     gplot1.plot(rplot*1e-3, np.log10(np.abs(u0[sprsm * np.r_[0:muMAX]]) ** 2))
     gplot1.set_xlabel('$|u|^2$')
@@ -197,7 +200,7 @@ if __name__ == '__main__':
               % (K, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
 
     # Plotting the field amplitude in a color chart
-    fig2, gplot2 = plt.subplots(figsize=(3, 3), dpi=80)
+    fig2, gplot2 = plt.subplots(figsize=(6, 6), dpi=80)
     gplot2.set_title(buf.getvalue(), y=1.04, x=0.6)
     X, Y = np.meshgrid(zplot * 1e-6, rplot * 1e-3)
     cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
@@ -216,13 +219,24 @@ if __name__ == '__main__':
     # ------------------------------The color plot function saving the main color plot
     def save_color_plot():
         """Saves the main color plot as a raster image"""
+        #  Result file path formation
+        fpath = os.path.dirname(sys.argv[0])
+        drv = os.path.splitdrive(fpath)
+        dirname = drv[0] + "\\Python\\Results"  # ------------ The directory where to save results to
+
+        # ------------ Choosing the name of the image file to save results to
+        imagefilename = fd.asksaveasfilename(initialdir = dirname, title = "Choose the file to save the color plot to",\
+                                           filetypes = (("png files","*.png"),("all files","*.*")))
+        if imagefilename == "":
+            imagefilename = dirname + "\\1D_stable_linear_colorplot.png"
         fig2.savefig(imagefilename, dpi=600)
 
     # ------------------------------Showing about popup message
     def show_about_message():
         """Saves the main color plot as a raster image"""
-        pass
+        tkm.showinfo("1D finite-difference TBC code", message="Implements 1D finite-difference code with unconditionally stable linear potential TBC.")
 
+    # Reacting on the main window closing event
     master.protocol("WM_DELETE_WINDOW", quit_program)
 
 
@@ -236,16 +250,15 @@ if __name__ == '__main__':
     helpmenu.add_command(label="About", command=show_about_message)
     mainmenu.add_cascade(label="File",menu=filemenu)
     mainmenu.add_cascade(label="Help", menu=helpmenu)
+    master.config(menu=mainmenu)
 
-    helpmenu = tk.Menu(mainmenu, tearoff=0)
-
-    # Various containers
+    # Various frame containers
     topframe = tk.Frame(master)
     frame = tk.Frame(master)
     topframe.pack(fill=tk.BOTH)
     frame.pack(fill=tk.BOTH)
 
-    # Canvas for the figure
+    # Canvases for the figures
     canvas1 = FigureCanvasTkAgg(fig1, master=frame)
     canvas1.draw()
     canvas1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
