@@ -205,7 +205,7 @@ if __name__ == '__main__':
     gplot2.set_title(buf.getvalue(), y=1.04, x=0.6)
     X, Y = np.meshgrid(zplot * 1e-6, rplot * 1e-3)
     cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
-    fig2.colorbar(cset)
+    cb = fig2.colorbar(cset)
     gplot2.set_xlabel('z, mm')
     gplot2.set_ylabel('x, $\mu$m')
 
@@ -227,7 +227,7 @@ if __name__ == '__main__':
         # ------------ Choosing the name of the image file to save results to
         imagefilename = fd.asksaveasfilename(initialdir = dirname, title = "Choose the file to save the color plot to",\
                                            filetypes = (("png files","*.png"),("all files","*.*")))
-        if imagefilename == None:
+        if imagefilename is not None:
             fig2.savefig(imagefilename, dpi=600)
             return 1
         else:
@@ -235,12 +235,13 @@ if __name__ == '__main__':
 
     # Showing window to adjust color plot properties
     def set_color_plot_properties():
+        global cb
         answer = sdial.askstring("Color scheme", "Enter a name of color scheme", parent=master)
-        if answer != None:
-            fig2.axes[1].remove()
+        if answer is not None and answer in plt.colormaps():
             gplot2.clear()
+            cb.remove()
             cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot) ** 2), cmap=answer)
-            fig2.colorbar(cset)
+            cb = fig2.colorbar(cset)
             canvas2.draw()
             return 1
         else:
