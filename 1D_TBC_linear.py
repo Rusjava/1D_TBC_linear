@@ -13,6 +13,7 @@ import os, sys
 import tkinter as tk
 import tkinter.filedialog as fd
 import tkinter.messagebox as tkm
+import tkinter.simpledialog as sdial
 
 # External imports
 from matplotlib.backends.backend_tkagg import (
@@ -22,7 +23,7 @@ if __name__ == '__main__':
 
     RMIN = 30  # ------------------------Gap semi-thickness
     RMAX = 100  # ------------Maximum x
-    ZMAX = 1e4  # ----------------Waveguide length, nm
+    ZMAX = 1e3  # ----------------Waveguide length, nm
     eps = 0.0001  # Numerical precision
 
     h = 0.5  # ----------------------------- Transversal step
@@ -208,7 +209,6 @@ if __name__ == '__main__':
     gplot2.set_xlabel('z, mm')
     gplot2.set_ylabel('x, $\mu$m')
 
-
     # ----------------------------------------Using tk library to display results
     master = tk.Tk()
 
@@ -227,18 +227,24 @@ if __name__ == '__main__':
         # ------------ Choosing the name of the image file to save results to
         imagefilename = fd.asksaveasfilename(initialdir = dirname, title = "Choose the file to save the color plot to",\
                                            filetypes = (("png files","*.png"),("all files","*.*")))
-        if imagefilename == "":
+        if imagefilename == None:
             fig2.savefig(imagefilename, dpi=600)
             return 1
         else:
             return 0
 
     # Showing window to adjust color plot properties
-    def get_color_plot_properties():
-        answer = tkm.simpledialog.askstring("Color scheme", "Enter a name of color scheme",
-                                        parent=master)
-        cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot) ** 2), cmap=answer)
-        fig2.colorbar(cset)
+    def set_color_plot_properties():
+        answer = sdial.askstring("Color scheme", "Enter a name of color scheme", parent=master)
+        if answer != None:
+            fig2.axes[1].remove()
+            gplot2.clear()
+            cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot) ** 2), cmap=answer)
+            fig2.colorbar(cset)
+            canvas2.draw()
+            return 1
+        else:
+            return 0
 
 
     # ------------------------------Showing about popup message
@@ -249,27 +255,29 @@ if __name__ == '__main__':
     # Reacting on the main window closing event
     master.protocol("WM_DELETE_WINDOW", quit_program)
 
-
     # Creating the main menu bar
     mainmenu = tk.Menu(master)
+
     filemenu = tk.Menu(mainmenu, tearoff=0)
     filemenu.add_command(label="Save color plot", command=save_color_plot)
     filemenu.add_separator()
     filemenu.add_command(label="Exit", command=quit_program)
 
     plotmenu = tk.Menu(mainmenu, tearoff=0)
-    plotmenu.add_command(label="Color plot properties", command=get_color_plot_properties)
+    plotmenu.add_command(label="Color plot properties", command=set_color_plot_properties)
 
     helpmenu = tk.Menu(mainmenu, tearoff=0)
     helpmenu.add_command(label="About", command=show_about_message)
+
     mainmenu.add_cascade(label="File",menu=filemenu)
+    mainmenu.add_cascade(label="Plot", menu=plotmenu)
     mainmenu.add_cascade(label="Help", menu=helpmenu)
     master.config(menu=mainmenu)
 
     # Popup menus
-    colorpopup = tk.Menu(master, tearoff=0)
-    colorpopup.add_command("Save color plot", command=save_color_plot)
-    colorpopup.add_command(label="Color plot properties", command=get_color_plot_properties)
+    colorpopupmenu = tk.Menu(master, tearoff=0)
+    colorpopupmenu.add_command(label="Save color plot", command=save_color_plot)
+    colorpopupmenu.add_command(label="Color plot properties", command=set_color_plot_properties)
 
     # Various frame containers
     topframe = tk.Frame(master)
@@ -295,10 +303,10 @@ if __name__ == '__main__':
     def do_colorpopup(event):
         # display the color properties popup menu
         try:
-           colorpopup.tk_popup(event.x_root, event.y_root, 0)
+            colorpopupmenu.tk_popup(event.x_root, event.y_root, 0)
         finally:
             # make sure to release the grab (Tk 8.0a1 only)
-            colorpopup.grab_release()
+            colorpopupmenu.grab_release()
 
     # Binding colorpopuo callback
     canvas2.get_tk_widget().bind("<Button-3>", do_colorpopup)
