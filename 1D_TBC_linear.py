@@ -227,11 +227,11 @@ if __name__ == '__main__':
         # ------------ Choosing the name of the image file to save results to
         imagefilename = fd.asksaveasfilename(initialdir = dirname, title = "Choose the file to save the color plot to",\
                                            filetypes = (("png files","*.png"),("all files","*.*")))
-        if imagefilename is not None:
+        if imagefilename != '':
             fig2.savefig(imagefilename, dpi=600)
-            return 1
-        else:
             return 0
+        else:
+            return 1
 
     # Showing window to adjust color plot properties
     def set_color_plot_properties():
@@ -243,9 +243,9 @@ if __name__ == '__main__':
             cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot) ** 2), cmap=answer)
             cb = fig2.colorbar(cset)
             canvas2.draw()
-            return 1
-        else:
             return 0
+        else:
+            return 1
 
 
     # ------------------------------Showing about popup message
