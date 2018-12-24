@@ -18,6 +18,7 @@ import tkinter.simpledialog as sdial
 # External imports
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
+import TBC1D_GUI as gui
 
 if __name__ == '__main__':
 
@@ -184,133 +185,18 @@ if __name__ == '__main__':
     rplot = rplot - RMAX
 
     # Preparing the title string
-    buf = io.StringIO()
-    buf.write("|u|: eigenvalue = %1.5f,  $WAIST =$ %2.2f $\mu$m,  $AMP =$ %2.2f $\mu$m" \
+    buf1 = io.StringIO()
+    buf1.write("|u|: eigenvalue = %1.5f,  $WAIST =$ %2.2f $\mu$m,  $AMP =$ %2.2f $\mu$m" \
               % (kk, WAIST * 1e-3, 2*kappa/fq/fq * 1e-3))
 
-    # Plotting the initial field amplitude
-    fig1, gplot1 = plt.subplots(figsize=(6, 6), dpi=80)
-    gplot1.set_title(buf.getvalue(), y=1.04)
-    gplot1.plot(rplot*1e-3, np.log10(np.abs(u0[sprsm * np.r_[0:muMAX]]) ** 2))
-    gplot1.set_xlabel('$|u|^2$')
-    gplot1.set_ylabel('x, $\mu$m')
-
     # Preparing the title string
-    buf = io.StringIO()
-    buf.write("$|u|^2$: K = %1.5f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %3.0f $\mu$m" \
+    buf2 = io.StringIO()
+    buf2.write("$|u|^2$: K = %1.5f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %3.0f $\mu$m" \
               % (K, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
 
-    # Plotting the field amplitude in a color chart
-    fig2, gplot2 = plt.subplots(figsize=(6, 6), dpi=80)
-    gplot2.set_title(buf.getvalue(), y=1.04, x=0.6)
-    X, Y = np.meshgrid(zplot * 1e-6, rplot * 1e-3)
-    cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot)**2), cmap='jet')
-    cb = fig2.colorbar(cset)
-    gplot2.set_xlabel('z, mm')
-    gplot2.set_ylabel('x, $\mu$m')
-
-    # ----------------------------------------Using tk library to display results
-    master = tk.Tk()
-
-    # ------------------------------The program closing function and event handling
-    def quit_program():
-        sys.exit(0)
-
-    # ------------------------------The color plot function saving the main color plot
-    def save_color_plot():
-        """Saves the main color plot as a raster image"""
-        #  Result file path formation
-        fpath = os.path.dirname(sys.argv[0])
-        drv = os.path.splitdrive(fpath)
-        dirname = drv[0] + "\\Python\\Results"  # ------------ The directory where to save results to
-
-        # ------------ Choosing the name of the image file to save results to
-        imagefilename = fd.asksaveasfilename(initialdir = dirname, title = "Choose the file to save the color plot to",\
-                                           filetypes = (("png files","*.png"),("all files","*.*")))
-        if imagefilename != '':
-            fig2.savefig(imagefilename, dpi=600)
-            return 0
-        else:
-            return 1
-
-    # Showing window to adjust color plot properties
-    def set_color_plot_properties():
-        global cb
-        answer = sdial.askstring("Color scheme", "Enter a name of color scheme", parent=master)
-        if answer is not None and answer in plt.colormaps():
-            gplot2.clear()
-            cb.remove()
-            cset = gplot2.pcolormesh(X, Y, np.log10(np.abs(uplot) ** 2), cmap=answer)
-            cb = fig2.colorbar(cset)
-            canvas2.draw()
-            return 0
-        else:
-            return 1
+    # ----------------------------------Creating new GUI and plotting the graphics
+    newgui = gui.TBC1D_GUI()
+    newgui.plot_graphics(uplot,buf1,buf2,rplot,zplot,u0[sprsm * np.r_[0:muMAX]])
 
 
-    # ------------------------------Showing about popup message
-    def show_about_message():
-        """Saves the main color plot as a raster image"""
-        tkm.showinfo("1D finite-difference TBC code", message="Implements 1D finite-difference code with unconditionally stable linear potential TBC.")
 
-    # Reacting on the main window closing event
-    master.protocol("WM_DELETE_WINDOW", quit_program)
-
-    # Creating the main menu bar
-    mainmenu = tk.Menu(master)
-
-    filemenu = tk.Menu(mainmenu, tearoff=0)
-    filemenu.add_command(label="Save color plot", command=save_color_plot)
-    filemenu.add_separator()
-    filemenu.add_command(label="Exit", command=quit_program)
-
-    plotmenu = tk.Menu(mainmenu, tearoff=0)
-    plotmenu.add_command(label="Color plot properties", command=set_color_plot_properties)
-
-    helpmenu = tk.Menu(mainmenu, tearoff=0)
-    helpmenu.add_command(label="About", command=show_about_message)
-
-    mainmenu.add_cascade(label="File",menu=filemenu)
-    mainmenu.add_cascade(label="Plot", menu=plotmenu)
-    mainmenu.add_cascade(label="Help", menu=helpmenu)
-    master.config(menu=mainmenu)
-
-    # Popup menus
-    colorpopupmenu = tk.Menu(master, tearoff=0)
-    colorpopupmenu.add_command(label="Save color plot", command=save_color_plot)
-    colorpopupmenu.add_command(label="Color plot properties", command=set_color_plot_properties)
-
-    # Various frame containers
-    topframe = tk.Frame(master)
-    frame = tk.Frame(master)
-    topframe.pack(fill=tk.BOTH)
-    frame.pack(fill=tk.BOTH)
-
-    # Canvases for the figures
-    canvas1 = FigureCanvasTkAgg(fig1, master=frame)
-    canvas1.draw()
-    canvas1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-    canvas2 = FigureCanvasTkAgg(fig2, master=frame)
-    canvas2.draw()
-    canvas2.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
-
-    # Top label of the window
-    window_title = "The results of the PWE solution with a discrete TBC"
-    msg = tk.Label(topframe, text=window_title)
-    msg.config(bg='lightgreen', font=('times', 14, 'italic'))
-    msg.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-
-    # Popup menu callbacks
-    def do_colorpopup(event):
-        # display the color properties popup menu
-        try:
-            colorpopupmenu.tk_popup(event.x_root, event.y_root, 0)
-        finally:
-            # make sure to release the grab (Tk 8.0a1 only)
-            colorpopupmenu.grab_release()
-
-    # Binding colorpopuo callback
-    canvas2.get_tk_widget().bind("<Button-3>", do_colorpopup)
-
-    # The main loop
-    tk.mainloop()
