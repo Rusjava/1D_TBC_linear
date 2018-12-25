@@ -5,19 +5,12 @@ import math
 import cmath
 import numpy as np
 import io
-import matplotlib.pyplot as plt
 import aux_functions as aux
-import os, sys
 
 # Tkinter imports
 import tkinter as tk
-import tkinter.filedialog as fd
-import tkinter.messagebox as tkm
-import tkinter.simpledialog as sdial
 
 # External imports
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
 import TBC1D_GUI as gui
 
 if __name__ == '__main__':
@@ -197,6 +190,7 @@ if __name__ == '__main__':
     # ----------------------------------Creating new GUI and plotting the graphics
     newgui = gui.TBC1D_GUI()
     newgui.plot_graphics(uplot,buf1,buf2,rplot,zplot,u0[sprsm * np.r_[0:muMAX]])
+    tk.mainloop()
 
 
 
