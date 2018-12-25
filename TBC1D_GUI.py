@@ -33,6 +33,7 @@ class TBC1D_GUI:
         self.gplot1 = None
         self.gplot2 = None
         self.uplot = None
+        self.u0sp = None
         self.cb = None
         self.X = None
         self.Y = None
@@ -72,7 +73,7 @@ class TBC1D_GUI:
         self.msg = tk.Label(self.topframe, text=self.window_title)
         self.msg.config(bg='lightgreen', font=('times', 14, 'italic'))
         self.msg.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.showbutton = tk.Button(self.topframe, text="Show figures", command=self.plot_graphics)
+        self.showbutton = tk.Button(self.topframe, text="Compute", command=self.plot_graphics)
         self.showbutton.pack(side=tk.RIGHT)
 
         # The main loop
@@ -83,12 +84,9 @@ class TBC1D_GUI:
             sys.exit(0)
 
     # --------------------------------Plotting the graphics
-    def plot_graphics(self, uplot, rplot, zplot, u0sp):
-        """Plotting the calculated graphics"""
-        self.uplot = uplot
-        self.zplot = zplot
-        self.rplot = rplot
-        self.u0sp = u0sp
+    def plot_graphics(self):
+        """Computing and color plotting the amplitude"""
+        self.uplot, self.u0sp = tbc.compute_amplitude()
 
         # Preparing the title string
         self.buf1 = io.StringIO()
@@ -103,14 +101,14 @@ class TBC1D_GUI:
         # Plotting the initial field amplitude
         self.fig1, self.gplot1 = plt.subplots(figsize=(6, 6), dpi=80)
         self.gplot1.set_title(self.buf1.getvalue(), y=1.04)
-        self.gplot1.plot(self.rplot * 1e-3, np.log10(np.abs(self.u0sp) ** 2))
+        self.gplot1.plot(tbc.rplot * 1e-3, np.log10(np.abs(self.u0sp) ** 2))
         self.gplot1.set_xlabel('$|u|^2$')
         self.gplot1.set_ylabel('x, $\mu$m')
 
         # Plotting the field amplitude in a color chart
         self.fig2, self.gplot2 = plt.subplots(figsize=(6, 6), dpi=80)
         self.gplot2.set_title(self.buf2.getvalue(), y=1.04, x=0.6)
-        self.X, self.Y = np.meshgrid(self.zplot * 1e-6, self.rplot * 1e-3)
+        self.X, self.Y = np.meshgrid(tbc.zplot * 1e-6, tbc.rplot * 1e-3)
         cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.uplot) ** 2), cmap='jet')
         self.cb = self.fig2.colorbar(cset)
         self.gplot2.set_xlabel('z, mm')

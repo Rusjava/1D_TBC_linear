@@ -28,7 +28,6 @@ model = 2  # The initial probability model
 kk = 0
 N = 1  # Number of longitudinal oscialltions
 
-
 T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 T_fq = T * fq  # ------------------------------------- Normalized longitudinal field length
 tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
@@ -51,14 +50,16 @@ if sprsn != 1:
 else:
     nuMAX = NMAX
 
-# -----------------------------------------------------Array for results and coordinates
+# -----------------------------------------------------Array for the coordinates
 zplot = np.zeros(nuMAX)
 rplot = h * sprsm * np.r_[0:muMAX]
-uplot = np.zeros((muMAX,nuMAX),dtype=complex)
 
 # The main computational function
 def compute_amplitude ():
-    nonlocal rplot, zplot, uplot, alp0, alp1
+    """"The function computes the amplitude with a given initial condition and with the unconditionally stable TBC"""
+    global rplot, zplot, alp0, alp1
+    # -------------------------------------------------The array for the results
+    uplot = np.zeros((muMAX, nuMAX), dtype=complex)
     # -----------------------------------------------Potential(r)
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
@@ -172,8 +173,10 @@ def compute_amplitude ():
         progress = int(round(1.*(cntn-1) / NMAX * 100))
         print(str(progress) + " %")
 
-
     rplot = rplot - RMAX
+
+    # ---------------------------Returning the results of the computation and the initial condition
+    return uplot, u0[sprsm * np.r_[0:muMAX]]
 
 
 
