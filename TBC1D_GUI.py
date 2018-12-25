@@ -18,6 +18,7 @@ import tkinter.simpledialog as sdial
 # External imports
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
+import TBC1D_linear as tbc
 
 #The main GUI class
 
@@ -75,30 +76,40 @@ class TBC1D_GUI:
         self.showbutton.pack(side=tk.RIGHT)
 
         # The main loop
-        #tk.mainloop()
+        tk.mainloop()
 
     # ------------------------------The program closing method and event handling
     def quit_program(self):
             sys.exit(0)
 
     # --------------------------------Plotting the graphics
-    def plot_graphics(self, uplot, buf1, buf2, rplot, zplot, u0sp):
+    def plot_graphics(self, uplot, rplot, zplot, u0sp):
         """Plotting the calculated graphics"""
         self.uplot = uplot
         self.zplot = zplot
         self.rplot = rplot
         self.u0sp = u0sp
 
+        # Preparing the title string
+        self.buf1 = io.StringIO()
+        self.buf1.write("|u|: eigenvalue = %1.5f,  $WAIST =$ %2.2f $\mu$m,  $AMP =$ %2.2f $\mu$m" \
+                   % (tbc.kk, tbc.WAIST * 1e-3, 2 * tbc.kappa / tbc.fq / tbc.fq * 1e-3))
+
+        # Preparing the title string
+        self.buf2 = io.StringIO()
+        self.buf2.write("$|u|^2$: K = %1.5f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %3.0f $\mu$m" \
+                   % (tbc.K, tbc.RMIN * 1e-3, tbc.RMAX * 1e-3, tbc.ZMAX * 1e-3))
+
         # Plotting the initial field amplitude
         self.fig1, self.gplot1 = plt.subplots(figsize=(6, 6), dpi=80)
-        self.gplot1.set_title(buf1.getvalue(), y=1.04)
+        self.gplot1.set_title(self.buf1.getvalue(), y=1.04)
         self.gplot1.plot(self.rplot * 1e-3, np.log10(np.abs(self.u0sp) ** 2))
         self.gplot1.set_xlabel('$|u|^2$')
         self.gplot1.set_ylabel('x, $\mu$m')
 
         # Plotting the field amplitude in a color chart
         self.fig2, self.gplot2 = plt.subplots(figsize=(6, 6), dpi=80)
-        self.gplot2.set_title(buf2.getvalue(), y=1.04, x=0.6)
+        self.gplot2.set_title(self.buf2.getvalue(), y=1.04, x=0.6)
         self.X, self.Y = np.meshgrid(self.zplot * 1e-6, self.rplot * 1e-3)
         cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.uplot) ** 2), cmap='jet')
         self.cb = self.fig2.colorbar(cset)
@@ -161,3 +172,7 @@ class TBC1D_GUI:
         finally:
             # make sure to release the grab (Tk 8.0a1 only)
             self.colorpopupmenu.grab_release()
+
+# -----------------------------------Executing the main application code
+if __name__ == '__main__':
+    newgui = TBC1D_GUI()

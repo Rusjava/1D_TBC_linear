@@ -7,60 +7,61 @@ import numpy as np
 import io
 import aux_functions as aux
 
-# Tkinter imports
-import tkinter as tk
+RMIN = 30  # ------------------------Gap semi-thickness
+RMAX = 100  # ------------Maximum x
+ZMAX = 1e3  # ----------------Waveguide length, nm
+eps = 0.0001  # Numerical precision
 
-# External imports
-import TBC1D_GUI as gui
+h = 0.5  # ----------------------------- Transversal step
+tau_int = 1  # ----------------------------- Longitudinal step
+sprsn = 2  # ----------------------------ARRAY thinning(long range)
+sprsm = 1  # ----------------------------ARRAY thinning
 
-if __name__ == '__main__':
+U0 = 0.02  # The potential well depth
+alp1 = 4*U0
+alp0 = 0
 
-    RMIN = 30  # ------------------------Gap semi-thickness
-    RMAX = 100  # ------------Maximum x
-    ZMAX = 1e3  # ----------------Waveguide length, nm
-    eps = 0.0001  # Numerical precision
+kappa = 0.001  # ------------------------------- The external field strength
+K = 0  # The spatial frequency of the initial condition
+fq = 0.01  # Longitudinal oscillation frequency
+model = 2  # The initial probability model
+kk = 0
+N = 1  # Number of longitudinal oscialltions
 
-    h = 0.5  # ----------------------------- Transversal step
-    tau_int = 1  # ----------------------------- Longitudinal step
-    sprsn = 2  # ----------------------------ARRAY thinning(long range)
-    sprsm = 1  # ----------------------------ARRAY thinning
 
-    U0 = 0.02  # The potential well depth
-    alp1 = 4*U0
-    alp0 = 0
+T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
+T_fq = T * fq  # ------------------------------------- Normalized longitudinal field length
+tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
+K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
+K2 = 2 * K1 / fq
+G0 = aux.sin_G(0, T_fq, K1)
+delta_max = aux.sin_F(T * fq, T_fq, K2)
+N_delta_max = int(math.floor(delta_max/h))
 
-    kappa = 0.001  # ------------------------------- The external field strength
-    K = 0  # The spatial frequency of the initial condition
-    fq = 0.01  # Longitudinal oscillation frequency
-    model = 2  # The initial probability model
-    kk = 0
-    N = 1  # Number of longitudinal oscialltions
-    T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
-    T_fq = T * fq  # ------------------------------------- Normalized longitudinal field length
-    tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
-    K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
-    K2 = 2 * K1 / fq
-    G0 = aux.sin_G(0, T_fq, K1)
-    delta_max = aux.sin_F(T * fq, T_fq, K2)
-    N_delta_max = int(math.floor(delta_max/h))
+MMAX = int(round((2. * RMAX + delta_max) / h)) - 1
+muMAX = int(round(2. * RMAX / h/ sprsm)) - 1  # The dimension of sparsed matrices in x direction
+MMIN = int(round((RMAX - RMIN) / h)) - 1
+MMIN2 = int(round((RMAX + RMIN) / h)) - 1
+NMAX = int(round(ZMAX / tau_int))
+WAIST = RMIN  # Gaussian beam waist
 
-    MMAX = int(round((2. * RMAX + delta_max) / h)) - 1
-    muMAX = int(round(2. * RMAX / h/ sprsm)) - 1  # The dimension of sparsed matrices in x direction
-    MMIN = int(round((RMAX - RMIN) / h)) - 1
-    MMIN2 = int(round((RMAX + RMIN) / h)) - 1
-    NMAX = int(round(ZMAX / tau_int))
-    WAIST = RMIN  # Gaussian beam waist
+# Sparsing parameters
+if sprsn != 1:
+    nuMAX = math.floor(NMAX / sprsn) + 1
+else:
+    nuMAX = NMAX
 
-    # Sparsing parameters
-    if sprsn != 1:
-        nuMAX = math.floor(NMAX / sprsn) + 1
-    else:
-        nuMAX = NMAX
+# -----------------------------------------------------Array for results and coordinates
+zplot = np.zeros(nuMAX)
+rplot = h * sprsm * np.r_[0:muMAX]
+uplot = np.zeros((muMAX,nuMAX),dtype=complex)
 
+# The main computational function
+def compute_amplitude ():
+    nonlocal rplot, zplot, uplot, alp0, alp1
+    # -----------------------------------------------Potential(r)
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
-
-    # -----------------------------------------------Potential(r)
     if model == 0:
         # ------------------------------PLANE WAVE
         u0 = aux.planewave_f(r, 0, RMAX, K + G0)
@@ -82,13 +83,10 @@ if __name__ == '__main__':
     alp = np.zeros(MMAX+2,dtype=complex)
     beta = np.zeros(NMAX,dtype=complex)
     gg = np.zeros(NMAX,dtype=complex)
-    uplot = np.zeros((muMAX,nuMAX),dtype=complex)
 
     # ----------------------------------------------MARCHING -- old TBC
     utop[0] = u[MMAX]
     ubottom[0] = u[1]
-    zplot = np.zeros(nuMAX)
-    rplot = r[sprsm * np.r_[0:muMAX]]
     P = np.ones(MMAX + 2,dtype=complex)
     Q = np.ones(MMAX + 2,dtype=complex)
     c1 = h**2/4
@@ -176,21 +174,6 @@ if __name__ == '__main__':
 
 
     rplot = rplot - RMAX
-
-    # Preparing the title string
-    buf1 = io.StringIO()
-    buf1.write("|u|: eigenvalue = %1.5f,  $WAIST =$ %2.2f $\mu$m,  $AMP =$ %2.2f $\mu$m" \
-              % (kk, WAIST * 1e-3, 2*kappa/fq/fq * 1e-3))
-
-    # Preparing the title string
-    buf2 = io.StringIO()
-    buf2.write("$|u|^2$: K = %1.5f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %3.0f $\mu$m" \
-              % (K, RMIN * 1e-3, RMAX * 1e-3, ZMAX * 1e-3))
-
-    # ----------------------------------Creating new GUI and plotting the graphics
-    newgui = gui.TBC1D_GUI()
-    newgui.plot_graphics(uplot,buf1,buf2,rplot,zplot,u0[sprsm * np.r_[0:muMAX]])
-    tk.mainloop()
 
 
 
