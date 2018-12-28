@@ -8,6 +8,7 @@ import io
 import matplotlib.pyplot as plt
 import aux_functions as aux
 import os, sys
+import threading as th
 
 # Tkinter imports
 import tkinter as tk
@@ -37,17 +38,18 @@ class TBC1D_GUI:
         self.cb = None
         self.X = None
         self.Y = None
+        self.computed = False
 
         # Creating the main menu bar
         self.mainmenu = tk.Menu(self.master)
 
         self.filemenu = tk.Menu(self.mainmenu, tearoff=0)
-        self.filemenu.add_command(label="Save color plot", command=self.save_color_plot)
+        self.filemenu.add_command(label="Save color plot", command=self.save_color_plot, state="disabled")
         self.filemenu.add_separator()
         self.filemenu.add_command(label="Exit", command=self.quit_program)
 
         self.plotmenu = tk.Menu(self.mainmenu, tearoff=0)
-        self.plotmenu.add_command(label="Color plot properties", command=self.set_color_plot_properties)
+        self.plotmenu.add_command(label="Color plot properties", command=self.set_color_plot_properties, state="disabled")
 
         self.helpmenu = tk.Menu(self.mainmenu, tearoff=0)
         self.helpmenu.add_command(label="About", command=self.show_about_message)
@@ -76,6 +78,9 @@ class TBC1D_GUI:
         self.showbutton = tk.Button(self.topframe, text="Compute", command=self.plot_graphics)
         self.showbutton.pack(side=tk.RIGHT)
 
+        # Working thread
+        cth = None
+
         # The main loop
         tk.mainloop()
 
@@ -85,8 +90,9 @@ class TBC1D_GUI:
 
     # --------------------------------Plotting the graphics
     def plot_graphics(self):
-        """Computing and color plotting the amplitude"""
-        self.uplot, self.u0sp = tbc.compute_amplitude()
+        """Computing in a separate thread and color plotting the amplitude"""
+        self.cth = CompThread()
+        self.cth.start()
 
         # Preparing the title string
         self.buf1 = io.StringIO()
@@ -124,6 +130,10 @@ class TBC1D_GUI:
 
         # Binding colorpopuo callback
         self.canvas2.get_tk_widget().bind("<Button-3>", self.do_colorpopup)
+
+        # Enabling menu items
+        self.mainmenu.entryconfig("Save color plot", state="normal")
+        self.plotmenu.entryconfig("Color plot properties", state="normal")
 
     # ------------------------------The color plot function saving the main color plot
     def save_color_plot(self):
@@ -170,6 +180,19 @@ class TBC1D_GUI:
         finally:
             # make sure to release the grab (Tk 8.0a1 only)
             self.colorpopupmenu.grab_release()
+
+
+# ---------------------------------------------A custom class for a worker thread
+class CompThread(th.Thread):
+    # Constructor
+    def __init__(self):
+        super().__init__()
+        self.uplot = None
+        self.u0sp = None
+
+    def run(self):
+        self.uplot, self.u0sp = tbc.compute_amplitude()
+
 
 # -----------------------------------Executing the main application code
 if __name__ == '__main__':
