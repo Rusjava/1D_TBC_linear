@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import aux_functions as aux
 import os, sys
 import threading as th
+import queue as que
 
 # Tkinter imports
 import tkinter as tk
@@ -39,6 +40,8 @@ class TBC1D_GUI:
         self.X = None
         self.Y = None
         self.computed = False
+        self.queue = None
+        self.id = "finished"
 
         # Creating the main menu bar
         self.mainmenu = tk.Menu(self.master)
@@ -75,7 +78,7 @@ class TBC1D_GUI:
         self.msg = tk.Label(self.topframe, text=self.window_title)
         self.msg.config(bg='lightgreen', font=('times', 14, 'italic'))
         self.msg.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.showbutton = tk.Button(self.topframe, text="Compute", command=self.plot_graphics)
+        self.showbutton = tk.Button(self.topframe, text="Compute", command=self.compute_graphics)
         self.showbutton.pack(side=tk.RIGHT)
 
         # Working thread
@@ -88,11 +91,24 @@ class TBC1D_GUI:
     def quit_program(self):
             sys.exit(0)
 
-    # --------------------------------Plotting the graphics
-    def plot_graphics(self):
+    # --------------------------------Computing the graphics
+    def compute_graphics(self):
         """Computing in a separate thread and color plotting the amplitude"""
-        self.cth = CompThread()
+        self.queue = que.Queue(1)
+        self.cth = CompThread(self.queue)
         self.cth.start()
+
+    # --------------------------An auxialiry merhod testing if the queue is not empty
+    def test_queue(self):
+        try:
+            message = self.queue.get(0)
+        except que.Empty():
+            self.master.after(100, self.test_queue)
+
+    # --------------------------------- Plotting the graphics
+    def plot_graphics(self):
+        # Testing if the computation is complete
+        self.test_queue()
 
         # Preparing the title string
         self.buf1 = io.StringIO()
@@ -185,13 +201,16 @@ class TBC1D_GUI:
 # ---------------------------------------------A custom class for a worker thread
 class CompThread(th.Thread):
     # Constructor
-    def __init__(self):
+    def __init__(self, que):
         super().__init__()
         self.uplot = None
         self.u0sp = None
+        self.queue = que
 
     def run(self):
         self.uplot, self.u0sp = tbc.compute_amplitude()
+        # Filling the queue in
+        self.queue.put(self.id)
 
 
 # -----------------------------------Executing the main application code
