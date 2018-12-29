@@ -94,28 +94,34 @@ class TBC1D_GUI:
     # --------------------------------Computing the graphics
     def compute_graphics(self):
         """Computing in a separate thread and color plotting the amplitude"""
+        self.showbutton.config(state="disabled")
         self.queue = que.Queue(1)
-        self.cth = CompThread(self.queue)
+        self.cth = CompThread(self.queue, self.id)
         self.cth.start()
 
-    # --------------------------An auxialiry merhod testing if the queue is not empty
+        # Testing if the computation is complete and plotting graphics
+        self.test_queue()
+
+    # --------------------------An auxiliary method testing if the queue is not empty and then plotting graphics
     def test_queue(self):
         try:
             message = self.queue.get(0)
-        except que.Empty():
+            self.plot_graphics()
+        except que.Empty:
             self.master.after(100, self.test_queue)
 
     # --------------------------------- Plotting the graphics
     def plot_graphics(self):
-        # Testing if the computation is complete
-        self.test_queue()
+        """"Plotting the computed graphics"""
+        if self.fig1 != None:
+            self.canvas1.get_tk_widget().destroy()
+            self.canvas2.get_tk_widget().destroy()
 
-        # Preparing the title string
+        # Preparing title strings
         self.buf1 = io.StringIO()
         self.buf1.write("|u|: eigenvalue = %1.5f,  $WAIST =$ %2.2f $\mu$m,  $AMP =$ %2.2f $\mu$m" \
                    % (tbc.kk, tbc.WAIST * 1e-3, 2 * tbc.kappa / tbc.fq / tbc.fq * 1e-3))
 
-        # Preparing the title string
         self.buf2 = io.StringIO()
         self.buf2.write("$|u|^2$: K = %1.5f,  $XMAX =$ %4.2f $\mu$m,  $XMIN =$ %4.2f $\mu$m,  $ZMAX =$ %3.0f $\mu$m" \
                    % (tbc.K, tbc.RMIN * 1e-3, tbc.RMAX * 1e-3, tbc.ZMAX * 1e-3))
@@ -123,7 +129,7 @@ class TBC1D_GUI:
         # Plotting the initial field amplitude
         self.fig1, self.gplot1 = plt.subplots(figsize=(6, 6), dpi=80)
         self.gplot1.set_title(self.buf1.getvalue(), y=1.04)
-        self.gplot1.plot(tbc.rplot * 1e-3, np.log10(np.abs(self.u0sp) ** 2))
+        self.gplot1.plot(tbc.rplot * 1e-3, np.log10(np.abs(self.cth.u0sp) ** 2))
         self.gplot1.set_xlabel('$|u|^2$')
         self.gplot1.set_ylabel('x, $\mu$m')
 
@@ -131,7 +137,7 @@ class TBC1D_GUI:
         self.fig2, self.gplot2 = plt.subplots(figsize=(6, 6), dpi=80)
         self.gplot2.set_title(self.buf2.getvalue(), y=1.04, x=0.6)
         self.X, self.Y = np.meshgrid(tbc.zplot * 1e-6, tbc.rplot * 1e-3)
-        cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.uplot) ** 2), cmap='jet')
+        cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.cth.uplot) ** 2), cmap='jet')
         self.cb = self.fig2.colorbar(cset)
         self.gplot2.set_xlabel('z, mm')
         self.gplot2.set_ylabel('x, $\mu$m')
@@ -148,8 +154,9 @@ class TBC1D_GUI:
         self.canvas2.get_tk_widget().bind("<Button-3>", self.do_colorpopup)
 
         # Enabling menu items
-        self.mainmenu.entryconfig("Save color plot", state="normal")
+        self.filemenu.entryconfig("Save color plot", state="normal")
         self.plotmenu.entryconfig("Color plot properties", state="normal")
+        self.showbutton.config(state="normal")
 
     # ------------------------------The color plot function saving the main color plot
     def save_color_plot(self):
@@ -201,11 +208,12 @@ class TBC1D_GUI:
 # ---------------------------------------------A custom class for a worker thread
 class CompThread(th.Thread):
     # Constructor
-    def __init__(self, que):
+    def __init__(self, que, id):
         super().__init__()
         self.uplot = None
         self.u0sp = None
         self.queue = que
+        self.id = id
 
     def run(self):
         self.uplot, self.u0sp = tbc.compute_amplitude()
