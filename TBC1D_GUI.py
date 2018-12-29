@@ -28,6 +28,7 @@ import TBC1D_linear as tbc
 class TBC1D_GUI:
     def __init__(self):
         self.master = tk.Tk()
+
         # Reacting on the main window closing event
         self.master.protocol("WM_DELETE_WINDOW", self.quit_program)
         # Variable declarations
@@ -49,8 +50,9 @@ class TBC1D_GUI:
         self.queue = None
         self.id = "finished"
         self.calcprogressbarvalue = tk.DoubleVar()
+        self.domainbox = None
 
-        #  Result file path formation
+        #  The default path for saving the results
         fpath = os.path.dirname(sys.argv[0])
         drv = os.path.splitdrive(fpath)
         self.dirname = drv[0] + "\\Python\\Results"  # ------------ The directory where to save results to
@@ -63,6 +65,10 @@ class TBC1D_GUI:
         self.filemenu.add_separator()
         self.filemenu.add_command(label="Exit", command=self.quit_program)
 
+        self.calcmenu = tk.Menu(self.mainmenu, tearoff=0)
+        self.calcmenu.add_command(label="Set domain size and steps", command=self.set_domain_size,
+                                  state="normal")
+
         self.plotmenu = tk.Menu(self.mainmenu, tearoff=0)
         self.plotmenu.add_command(label="Color plot properties", command=self.set_color_plot_properties, state="disabled")
 
@@ -70,6 +76,7 @@ class TBC1D_GUI:
         self.helpmenu.add_command(label="About", command=self.show_about_message)
 
         self.mainmenu.add_cascade(label="File", menu=self.filemenu)
+        self.mainmenu.add_cascade(label="Calc", menu=self.calcmenu)
         self.mainmenu.add_cascade(label="Plot", menu=self.plotmenu)
         self.mainmenu.add_cascade(label="Help", menu=self.helpmenu)
         self.master.config(menu=self.mainmenu)
@@ -221,6 +228,22 @@ class TBC1D_GUI:
         finally:
             # make sure to release the grab (Tk 8.0a1 only)
             self.colorpopupmenu.grab_release()
+
+    # Domain size item call back
+    def set_domain_size(self):
+        """Setting the size of the computational domain and the time and spatial steps"""
+        self.domainbox = tk.Toplevel()
+        self.domainbox.protocol("WM_DELETE_WINDOW", self.update_parameters)
+        label1 = tk.Label(self.domainbox, text="Maximum time, ns")
+        self.field1 = tk.Entry(self.domainbox)
+        self.field1.insert(tk.END, str(tbc.ZMAX))
+        label1.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.field1.pack(side=tk.RIGHT, fill=tk.BOTH)
+
+    def update_parameters(self):
+        """Writting the size of the computational domain and the time and spatial steps"""
+        tbc.ZMAX = float(self.field1.get())
+        self.domainbox.destroy()
 
 
 # ---------------------------------------------A custom class for a worker thread
