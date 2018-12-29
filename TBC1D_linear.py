@@ -11,6 +11,7 @@ RMIN = 30  # ------------------------Gap semi-thickness
 RMAX = 100  # ------------Maximum x
 ZMAX = 1e3  # ----------------Waveguide length, nm
 eps = 0.0001  # Numerical precision
+progress = 0
 
 h = 0.5  # ----------------------------- Transversal step
 tau_int = 1  # ----------------------------- Longitudinal step
@@ -57,7 +58,7 @@ rplot = h * sprsm * np.r_[0:muMAX]
 # The main computational function
 def compute_amplitude ():
     """"The function computes the amplitude with a given initial condition and with the unconditionally stable TBC"""
-    global rplot, zplot, alp0, alp1
+    global rplot, zplot, alp0, alp1, progress
     # -------------------------------------------------The array for the results
     uplot = np.zeros((muMAX, nuMAX), dtype=complex)
     # -----------------------------------------------Potential(r)
@@ -171,7 +172,6 @@ def compute_amplitude ():
             nuu = nuu + 1
         # Printing the execution progress
         progress = int(round(1.*(cntn-1) / NMAX * 100))
-        print(str(progress) + " %")
 
     rplot = rplot - RMAX
 

@@ -35,14 +35,25 @@ class TBC1D_GUI:
         self.fig2 = None
         self.gplot1 = None
         self.gplot2 = None
+        self.canvas1 = None
+        self.canvas2 = None
         self.uplot = None
         self.u0sp = None
         self.cb = None
         self.X = None
         self.Y = None
+        self.buf1 = None
+        self.buf2 = None
         self.computed = False
+        self.cth = None
         self.queue = None
         self.id = "finished"
+        self.calcprogressbarvalue = tk.DoubleVar()
+
+        #  Result file path formation
+        fpath = os.path.dirname(sys.argv[0])
+        drv = os.path.splitdrive(fpath)
+        self.dirname = drv[0] + "\\Python\\Results"  # ------------ The directory where to save results to
 
         # Creating the main menu bar
         self.mainmenu = tk.Menu(self.master)
@@ -74,12 +85,14 @@ class TBC1D_GUI:
         self.topframe.pack(fill=tk.BOTH)
         self.frame.pack(fill=tk.BOTH)
 
-        # Top label of the window, a progress bar and a button
+        # The title and top label of the window
         self.window_title = "The results of the PWE solution with a discrete TBC"
         self.msg = tk.Label(self.topframe, text=self.window_title)
         self.msg.config(bg='lightgreen', font=('times', 12, 'italic'))
         self.msg.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.calcprogressbar = ttk.Progressbar(self.topframe)
+
+        # Creating a progress bar and a button
+        self.calcprogressbar = ttk.Progressbar(self.topframe, variable=self.calcprogressbarvalue)
         self.calcprogressbar.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
         self.showbutton = tk.Button(self.topframe, text="Compute", command=self.compute_graphics)
         self.showbutton.pack(side=tk.RIGHT)
@@ -107,6 +120,12 @@ class TBC1D_GUI:
 
     # --------------------------An auxiliary method testing if the queue is not empty and then plotting graphics
     def test_queue(self):
+        # Setting the progress bar
+        print(str(tbc.progress) + " %")
+        self.calcprogressbarvalue.set(tbc.progress)
+        self.topframe.update_idletasks()
+
+        # Checking if the computation is completed and then creating and displaying the figure
         try:
             message = self.queue.get(0)
             self.plot_graphics()
@@ -164,13 +183,9 @@ class TBC1D_GUI:
     # ------------------------------The color plot function saving the main color plot
     def save_color_plot(self):
         """Saves the main color plot as a raster image"""
-        #  Result file path formation
-        fpath = os.path.dirname(sys.argv[0])
-        drv = os.path.splitdrive(fpath)
-        dirname = drv[0] + "\\Python\\Results"  # ------------ The directory where to save results to
 
         # ------------ Choosing the name of the image file to save results to
-        imagefilename = fd.asksaveasfilename(initialdir=dirname, title="Choose the file to save the color plot to", \
+        imagefilename = fd.asksaveasfilename(initialdir=self.dirname, title="Choose the file to save the color plot to", \
                                              filetypes=(("png files", "*.png"), ("all files", "*.*")))
         if imagefilename != '':
             self.fig2.savefig(imagefilename, dpi=600)
@@ -185,7 +200,7 @@ class TBC1D_GUI:
         if answer is not None and answer in plt.colormaps():
             self.gplot2.clear()
             self.cb.remove()
-            cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.uplot) ** 2), cmap=answer)
+            cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.cth.uplot) ** 2), cmap=answer)
             self.cb = self.fig2.colorbar(cset)
             self.canvas2.draw()
             return 0
