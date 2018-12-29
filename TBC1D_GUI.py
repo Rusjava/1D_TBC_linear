@@ -16,6 +16,7 @@ import tkinter as tk
 import tkinter.filedialog as fd
 import tkinter.messagebox as tkm
 import tkinter.simpledialog as sdial
+import tkinter.ttk as ttk
 
 # External imports
 from matplotlib.backends.backend_tkagg import (
@@ -73,11 +74,13 @@ class TBC1D_GUI:
         self.topframe.pack(fill=tk.BOTH)
         self.frame.pack(fill=tk.BOTH)
 
-        # Top label of the window and the button
+        # Top label of the window, a progress bar and a button
         self.window_title = "The results of the PWE solution with a discrete TBC"
         self.msg = tk.Label(self.topframe, text=self.window_title)
-        self.msg.config(bg='lightgreen', font=('times', 14, 'italic'))
+        self.msg.config(bg='lightgreen', font=('times', 12, 'italic'))
         self.msg.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+        self.calcprogressbar = ttk.Progressbar(self.topframe)
+        self.calcprogressbar.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
         self.showbutton = tk.Button(self.topframe, text="Compute", command=self.compute_graphics)
         self.showbutton.pack(side=tk.RIGHT)
 
