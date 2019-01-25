@@ -66,7 +66,7 @@ class TBC1D_GUI:
         self.filemenu.add_command(label="Exit", command=self.quit_program)
 
         self.calcmenu = tk.Menu(self.mainmenu, tearoff=0)
-        self.calcmenu.add_command(label="Set domain size and steps", command=self.set_domain_size,
+        self.calcmenu.add_command(label="Set model parameters", command=self.set_domain_size,
                                   state="normal")
 
         self.plotmenu = tk.Menu(self.mainmenu, tearoff=0)
@@ -89,8 +89,8 @@ class TBC1D_GUI:
         # Various frame containers
         self.topframe = tk.Frame(self.master)
         self.frame = tk.Frame(self.master)
-        self.topframe.pack(fill=tk.BOTH)
-        self.frame.pack(fill=tk.BOTH)
+        self.topframe.pack(side=tk.TOP, fill=tk.BOTH)
+        self.frame.pack(side=tk.BOTTOM, fill=tk.BOTH)
 
         # The title and top label of the window
         self.window_title = "The results of the PWE solution with a discrete TBC"
@@ -218,7 +218,7 @@ class TBC1D_GUI:
     def show_about_message(self):
         """Saves the main color plot as a raster image"""
         tkm.showinfo("1D finite-difference TBC code",
-                        message="Implements 1D finite-difference code with unconditionally stable linear potential TBC.")
+                        message="Implements 1D finite-difference code with unconditionally stable linear potential TBC")
 
     # ----------------------------------Popup menu callbacks
     def do_colorpopup(self, event):
@@ -234,15 +234,28 @@ class TBC1D_GUI:
         """Setting the size of the computational domain and the time and spatial steps"""
         self.domainbox = tk.Toplevel()
         self.domainbox.protocol("WM_DELETE_WINDOW", self.update_parameters)
-        label1 = tk.Label(self.domainbox, text="Maximum time, ns")
-        self.field1 = tk.Entry(self.domainbox)
+        # Domain size field
+        frame1 = tk.Frame(self.domainbox)
+        frame1.pack(side = tk.TOP)
+        label1 = tk.Label(frame1, text="Maximum time, ns")
+        self.field1 = tk.Entry(frame1)
         self.field1.insert(tk.END, str(tbc.ZMAX))
         label1.pack(side=tk.LEFT, fill=tk.BOTH)
         self.field1.pack(side=tk.RIGHT, fill=tk.BOTH)
 
+        # Potential well depth field
+        frame2 = tk.Frame(self.domainbox)
+        frame2.pack(side=tk.TOP)
+        label2 = tk.Label(frame2, text="Potential well depth")
+        self.field2 = tk.Entry(frame2)
+        self.field2.insert(tk.END, str(tbc.U0))
+        label2.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.field2.pack(side=tk.RIGHT, fill=tk.BOTH)
+
     def update_parameters(self):
         """Writting the size of the computational domain and the time and spatial steps"""
         tbc.ZMAX = float(self.field1.get())
+        tbc.U0 = float(self.field2.get())
         self.domainbox.destroy()
 
 

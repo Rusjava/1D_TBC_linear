@@ -10,7 +10,7 @@ import aux_functions as aux
 RMIN = 30  # ------------------------Gap semi-thickness
 RMAX = 100  # ------------Maximum x
 ZMAX = 1e3  # ----------------Waveguide length, nm
-eps = 0.0001  # Numerical precision
+eps = 0.0001  # ------------------Numerical precision
 progress = 0
 
 h = 0.5  # ----------------------------- Transversal step
@@ -18,50 +18,57 @@ tau_int = 1  # ----------------------------- Longitudinal step
 sprsn = 2  # ----------------------------ARRAY thinning(long range)
 sprsm = 1  # ----------------------------ARRAY thinning
 
-U0 = 0.02  # The potential well depth
+U0 = 0.02  # ---------------------------The potential well depth
 alp1 = 4*U0
 alp0 = 0
 
 kappa = 0.001  # ------------------------------- The external field strength
-K = 0  # The spatial frequency of the initial condition
-fq = 0.01  # Longitudinal oscillation frequency
-model = 2  # The initial probability model
+K = 0  # -----------------------The spatial frequency of the initial condition
+fq = 0.01  # ------------------------Longitudinal oscillation frequency
+model = 2  # -----------------------------The initial probability model
 kk = 0
 N = 1  # Number of longitudinal oscialltions
 
-T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
-T_fq = T * fq  # ------------------------------------- Normalized longitudinal field length
-tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
-K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
-K2 = 2 * K1 / fq
-G0 = aux.sin_G(0, T_fq, K1)
-delta_max = aux.sin_F(T * fq, T_fq, K2)
-N_delta_max = int(math.floor(delta_max/h))
-
-MMAX = int(round((2. * RMAX + delta_max) / h)) - 1
-muMAX = int(round(2. * RMAX / h/ sprsm)) - 1  # The dimension of sparsed matrices in x direction
-MMIN = int(round((RMAX - RMIN) / h)) - 1
-MMIN2 = int(round((RMAX + RMIN) / h)) - 1
-NMAX = int(round(ZMAX / tau_int))
-WAIST = RMIN  # Gaussian beam waist
-
-# Sparsing parameters
-if sprsn != 1:
-    nuMAX = math.floor(NMAX / sprsn) + 1
-else:
-    nuMAX = NMAX
-
-# -----------------------------------------------------Array for the coordinates
-zplot = np.zeros(nuMAX)
-rplot = h * sprsm * np.r_[0:muMAX]
+# -----------------------------------------------------Arrays for the coordinates
+zplot = None
+rplot = None
+WAIST = 1;
 
 # The main computational function
 def compute_amplitude ():
     """"The function computes the amplitude with a given initial condition and with the unconditionally stable TBC"""
-    global rplot, zplot, alp0, alp1, progress
+    global WAIST, rplot, zplot, alp0, alp1, progress
+
+    T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
+    T_fq = T * fq  # ------------------------------------- Normalized longitudinal field length
+    tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
+    K1 = kappa / fq  # ------------------------------------Additional spatial frequency related to the linear potential
+    K2 = 2 * K1 / fq
+    G0 = aux.sin_G(0, T_fq, K1)
+    delta_max = aux.sin_F(T * fq, T_fq, K2)
+    N_delta_max = int(math.floor(delta_max / h))
+
+    MMAX = int(round((2. * RMAX + delta_max) / h)) - 1
+    muMAX = int(round(2. * RMAX / h / sprsm)) - 1  # The dimension of sparsed matrices in x direction
+    MMIN = int(round((RMAX - RMIN) / h)) - 1
+    MMIN2 = int(round((RMAX + RMIN) / h)) - 1
+    NMAX = int(round(ZMAX / tau_int))
+    WAIST = RMIN  # Gaussian beam waist
+
+    # Sparsing parameters
+    if sprsn != 1:
+        nuMAX = math.floor(NMAX / sprsn) + 1
+    else:
+        nuMAX = NMAX
+
+    # -----------------------------------------------------Arrays for the coordinates
+    zplot = np.zeros(nuMAX)
+    rplot = h * sprsm * np.r_[0:muMAX]
+
     # -------------------------------------------------The array for the results
     uplot = np.zeros((muMAX, nuMAX), dtype=complex)
-    # -----------------------------------------------Potential(r)
+
+    # -----------------------------------------------Potential(x)
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
     if model == 0:
