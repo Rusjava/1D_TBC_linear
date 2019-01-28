@@ -19,7 +19,6 @@ sprsn = 2  # ----------------------------ARRAY thinning(long range)
 sprsm = 1  # ----------------------------ARRAY thinning
 
 U0 = 0.02  # ---------------------------The potential well depth
-alp1 = 4*U0
 alp0 = 0
 
 kappa = 0.001  # ------------------------------- The external field strength
@@ -37,8 +36,9 @@ WAIST = 1;
 # The main computational function
 def compute_amplitude ():
     """"The function computes the amplitude with a given initial condition and with the unconditionally stable TBC"""
-    global WAIST, rplot, zplot, alp0, alp1, progress
+    global WAIST, rplot, zplot, alp0, progress
 
+    alp1 = 4 * U0
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
     T_fq = T * fq  # ------------------------------------- Normalized longitudinal field length
     tau_fq = tau_int * fq  # ------------------------------------- Normalized longitudinal frequency
@@ -49,7 +49,7 @@ def compute_amplitude ():
     N_delta_max = int(math.floor(delta_max / h))
 
     MMAX = int(round((2. * RMAX + delta_max) / h)) - 1
-    muMAX = int(round(2. * RMAX / h / sprsm)) - 1  # The dimension of sparsed matrices in x direction
+    muMAX = int(round(2. * RMAX / h / sprsm)) - 1  # ---------------------------------------The dimension of sparsed matrices in x direction
     MMIN = int(round((RMAX - RMIN) / h)) - 1
     MMIN2 = int(round((RMAX + RMIN) / h)) - 1
     NMAX = int(round(ZMAX / tau_int))
@@ -71,10 +71,7 @@ def compute_amplitude ():
     # -----------------------------------------------Potential(x)
     r = np.r_[0:MMAX+2] * h
     z = tau_int * np.r_[0:NMAX]
-    if model == 0:
-        # ------------------------------PLANE WAVE
-        u0 = aux.planewave_f(r, 0, RMAX, K + G0)
-    elif model == 1:
+    if model == 1:
         # ---------------------------------------GAUSSIAN BEAM
         u0 = aux.gaussian_f(r, 0, RMAX, WAIST, K + G0)
     elif model == 2:
@@ -82,6 +79,9 @@ def compute_amplitude ():
         kk = aux.ms_energy(U0*RMIN**2, eps)/RMIN
         kk1 = math.sqrt(U0 - kk**2)
         u0 = aux.ms_function(r, RMAX, RMIN, kk, kk1) * np.exp(1j*G0*(r-RMAX))
+    else:
+        # ------------------------------PLANE WAVE
+        u0 = aux.planewave_f(r, 0, RMAX, K + G0)
 
     # -------------------------------------
     u = np.copy(u0)

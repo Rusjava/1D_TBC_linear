@@ -51,6 +51,9 @@ class TBC1D_GUI:
         self.id = "finished"
         self.calcprogressbarvalue = tk.DoubleVar()
         self.domainbox = None
+        self.field1 = None
+        self.field2 = None
+        self.field3 = None
 
         #  The default path for saving the results
         fpath = os.path.dirname(sys.argv[0])
@@ -252,10 +255,20 @@ class TBC1D_GUI:
         label2.pack(side=tk.LEFT, fill=tk.BOTH)
         self.field2.pack(side=tk.RIGHT, fill=tk.BOTH)
 
+        # Potential well depth field
+        frame3 = tk.Frame(self.domainbox)
+        frame3.pack(side=tk.TOP)
+        label3 = tk.Label(frame3, text="Model")
+        self.field3 = tk.Entry(frame3)
+        self.field3.insert(tk.END, str(tbc.model))
+        label3.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.field3.pack(side=tk.RIGHT, fill=tk.BOTH)
+
     def update_parameters(self):
         """Writting the size of the computational domain and the time and spatial steps"""
         tbc.ZMAX = float(self.field1.get())
         tbc.U0 = float(self.field2.get())
+        tbc.model = int(self.field3.get())
         self.domainbox.destroy()
 
 
