@@ -1,12 +1,9 @@
 # GUI for the 1D TBC code
 
 # Python inports
-import math
-import cmath
 import numpy as np
 import io
 import matplotlib.pyplot as plt
-import aux_functions as aux
 import os, sys
 import threading as th
 import queue as que
@@ -51,9 +48,9 @@ class TBC1D_GUI:
         self.id = "finished"
         self.calcprogressbarvalue = tk.DoubleVar()
         self.domainbox = None
-        self.field1 = None
-        self.field2 = None
-        self.field3 = None
+        self.calcitem1 = None
+        self.calcitem2 = None
+        self.calcitem3 = None
 
         #  The default path for saving the results
         fpath = os.path.dirname(sys.argv[0])
@@ -237,38 +234,28 @@ class TBC1D_GUI:
         """Setting the size of the computational domain and the time and spatial steps"""
         self.domainbox = tk.Toplevel()
         self.domainbox.protocol("WM_DELETE_WINDOW", self.update_parameters)
+
         # Domain size field
-        frame1 = tk.Frame(self.domainbox)
-        frame1.pack(side = tk.TOP)
-        label1 = tk.Label(frame1, text="Maximum time, ns")
-        self.field1 = tk.Entry(frame1)
-        self.field1.insert(tk.END, str(tbc.ZMAX))
-        label1.pack(side=tk.LEFT, fill=tk.BOTH)
-        self.field1.pack(side=tk.RIGHT, fill=tk.BOTH)
+        self.calcitem1 = CalcItem(self.domainbox, "Maximum time, ns", tbc.ZMAX, 0)
+        self.calcitem1.getFrame().pack(side = tk.TOP, fill=tk.BOTH)
+        sep1 = ttk.Separator(self.domainbox, orient=tk.HORIZONTAL)
+        sep1.pack(side=tk.TOP)
 
         # Potential well depth field
-        frame2 = tk.Frame(self.domainbox)
-        frame2.pack(side=tk.TOP)
-        label2 = tk.Label(frame2, text="Potential well depth")
-        self.field2 = tk.Entry(frame2)
-        self.field2.insert(tk.END, str(tbc.U0))
-        label2.pack(side=tk.LEFT, fill=tk.BOTH)
-        self.field2.pack(side=tk.RIGHT, fill=tk.BOTH)
+        self.calcitem2 = CalcItem(self.domainbox, "Potential well depth", tbc.U0, 0)
+        self.calcitem2.getFrame().pack(side=tk.TOP, fill=tk.BOTH)
+        sep2 = ttk.Separator(self.domainbox, orient=tk.HORIZONTAL)
+        sep2.pack(side=tk.TOP)
 
         # Potential well depth field
-        frame3 = tk.Frame(self.domainbox)
-        frame3.pack(side=tk.TOP)
-        label3 = tk.Label(frame3, text="Model")
-        self.field3 = tk.Entry(frame3)
-        self.field3.insert(tk.END, str(tbc.model))
-        label3.pack(side=tk.LEFT, fill=tk.BOTH)
-        self.field3.pack(side=tk.RIGHT, fill=tk.BOTH)
+        self.calcitem3 = CalcItem(self.domainbox, "Model", tbc.model, 1)
+        self.calcitem3.getFrame().pack(side=tk.TOP, fill=tk.BOTH)
 
     def update_parameters(self):
         """Writting the size of the computational domain and the time and spatial steps"""
-        tbc.ZMAX = float(self.field1.get())
-        tbc.U0 = float(self.field2.get())
-        tbc.model = int(self.field3.get())
+        tbc.ZMAX = self.calcitem1.getValue()
+        tbc.U0 = self.calcitem2.getValue()
+        tbc.model = self.calcitem3.getValue()
         self.domainbox.destroy()
 
 
@@ -286,6 +273,33 @@ class CompThread(th.Thread):
         self.uplot, self.u0sp = tbc.compute_amplitude()
         # Filling the queue in
         self.queue.put(self.id)
+
+# --------------------------------------------A custom class for calc menu items
+class CalcItem():
+    # Constructor
+    def __init__(self, master, text, value, type):
+        super().__init__()
+        self.type = type
+        self.frame = tk.Frame(master)
+        self.frame.pack(side=tk.TOP, fill=tk.BOTH)
+        self.label = tk.Label(self.frame, text=text)
+        self.field = tk.Entry(self.frame)
+        self.field.insert(tk.END, str(value))
+        self.label.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.field.pack(side=tk.RIGHT, fill=tk.BOTH)
+    # Getting the field value
+    def getValue(self):
+        if self.type==0:
+            return float(self.field.get())
+        else:
+            return int(self.field.get())
+    # Setting field value
+    def setValue(self, value):
+        self.field.insert(tk.END, str(value))
+    # Getting the frame
+    def getFrame(self):
+        return self.frame;
+
 
 
 # -----------------------------------Executing the main application code
