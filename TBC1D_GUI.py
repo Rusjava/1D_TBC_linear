@@ -62,6 +62,7 @@ class TBC1D_GUI:
 
         self.filemenu = tk.Menu(self.mainmenu, tearoff=0)
         self.filemenu.add_command(label="Save color plot", command=self.save_color_plot, state="disabled")
+        self.filemenu.add_command(label="Save plot data", command=self.save_plot_data, state="disabled")
         self.filemenu.add_separator()
         self.filemenu.add_command(label="Exit", command=self.quit_program)
 
@@ -179,11 +180,12 @@ class TBC1D_GUI:
         self.canvas2.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
         self.canvas2.draw()
 
-        # Binding colorpopuo callback
+        # Binding colorpopup callback
         self.canvas2.get_tk_widget().bind("<Button-3>", self.do_colorpopup)
 
         # Enabling menu items
         self.filemenu.entryconfig("Save color plot", state="normal")
+        self.filemenu.entryconfig("Save plot data", state="normal")
         self.plotmenu.entryconfig("Color plot properties", state="normal")
         self.showbutton.config(state="normal")
 
@@ -196,6 +198,18 @@ class TBC1D_GUI:
                                              filetypes=(("png files", "*.png"), ("all files", "*.*")))
         if imagefilename != '':
             self.fig2.savefig(imagefilename, dpi=600)
+            return 0
+        else:
+            return 1
+
+    # ------------------------------The color plot function saving the main color plot
+    def save_plot_data(self):
+        """Saves the main color plot as a raster image"""
+        # ------------ Choosing the name of the image file to save results to
+        datafilename = fd.asksaveasfilename(initialdir=self.dirname, title="Choose the file to save the plot data to", \
+                                             filetypes=(("data files", "*.dat"), ("text files", "*.txt"), ("all files", "*.*")))
+        if datafilename != '':
+            #self.fig2.savefig(imagefilename, dpi=600)
             return 0
         else:
             return 1
@@ -233,7 +247,7 @@ class TBC1D_GUI:
     def set_domain_size(self):
         """Setting the size of the computational domain and the time and spatial steps"""
         self.domainbox = tk.Toplevel()
-        self.domainbox.protocol("WM_DELETE_WINDOW", self.update_parameters)
+        self.domainbox.protocol("WM_DELETE_WINDOW", self.cancel_parameters)
 
         # Domain size field
         self.calcitem1 = CalcItem(self.domainbox, "Maximum time, ns", tbc.ZMAX, 0)
@@ -250,6 +264,16 @@ class TBC1D_GUI:
         # Potential well depth field
         self.calcitem3 = CalcItem(self.domainbox, "Model", tbc.model, 1)
         self.calcitem3.getFrame().pack(side=tk.TOP, fill=tk.BOTH)
+        sep3 = ttk.Separator(self.domainbox, orient=tk.HORIZONTAL)
+        sep3.pack(side=tk.TOP)
+
+        # Buttons
+        bframe = tk.Frame(self.domainbox)
+        bframe.pack(side=tk.TOP, fill=tk.BOTH)
+        okbutton = ttk.Button(bframe, text="OK", command=self.update_parameters)
+        okbutton.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+        cancelbutton = ttk.Button(bframe, text="Cancel", command=self.cancel_parameters)
+        cancelbutton.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
     def update_parameters(self):
         """Writting the size of the computational domain and the time and spatial steps"""
@@ -258,6 +282,9 @@ class TBC1D_GUI:
         tbc.model = self.calcitem3.getValue()
         self.domainbox.destroy()
 
+    def cancel_parameters(self):
+        """"Canceling parameter update and closing the window"""
+        self.domainbox.destroy()
 
 # ---------------------------------------------A custom class for a worker thread
 class CompThread(th.Thread):
