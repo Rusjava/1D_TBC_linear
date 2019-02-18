@@ -51,6 +51,7 @@ class TBC1D_GUI:
         self.calcitem1 = None
         self.calcitem2 = None
         self.calcitem3 = None
+        self.calcitem4 = None
 
         #  The default path for saving the results
         fpath = os.path.dirname(sys.argv[0])
@@ -262,10 +263,16 @@ class TBC1D_GUI:
         sep2.pack(side=tk.TOP)
 
         # Potential well depth field
-        self.calcitem3 = CalcItem(self.domainbox, "Model", tbc.model, 1)
+        self.calcitem3 = CalcItem(self.domainbox, "Model id", tbc.model, 1)
         self.calcitem3.getFrame().pack(side=tk.TOP, fill=tk.BOTH)
         sep3 = ttk.Separator(self.domainbox, orient=tk.HORIZONTAL)
         sep3.pack(side=tk.TOP)
+
+        # Satial frequancy of the initial condition
+        self.calcitem4 = CalcItem(self.domainbox, "Initial frequency", tbc.K, 0)
+        self.calcitem4.getFrame().pack(side=tk.TOP, fill=tk.BOTH)
+        sep4 = ttk.Separator(self.domainbox, orient=tk.HORIZONTAL)
+        sep4.pack(side=tk.TOP)
 
         # Buttons
         bframe = tk.Frame(self.domainbox)
@@ -280,6 +287,7 @@ class TBC1D_GUI:
         tbc.ZMAX = self.calcitem1.getValue()
         tbc.U0 = self.calcitem2.getValue()
         tbc.model = self.calcitem3.getValue()
+        tbc.K = self.calcitem4.getValue()
         self.domainbox.destroy()
 
     def cancel_parameters(self):
