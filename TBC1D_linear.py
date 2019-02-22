@@ -31,12 +31,14 @@ N = 1  # Number of longitudinal oscialltions
 # -----------------------------------------------------Arrays for the coordinates
 zplot = None
 rplot = None
-WAIST = 1;
+WAIST = 1
+muMAX = 1
+nuMAX = 1
 
 # The main computational function
 def compute_amplitude ():
     """"The function computes the amplitude with a given initial condition and with the unconditionally stable TBC"""
-    global WAIST, rplot, zplot, alp0, progress
+    global WAIST, rplot, zplot, alp0, progress, muMAX, nuMAX
 
     alp1 = 4 * U0
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent

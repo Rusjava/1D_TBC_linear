@@ -160,7 +160,7 @@ class TBC1D_GUI:
         # Plotting the initial field amplitude
         self.fig1, self.gplot1 = plt.subplots(figsize=(6, 6), dpi=80)
         self.gplot1.set_title(self.buf1.getvalue(), y=1.04)
-        self.gplot1.plot(tbc.rplot * 1e-3, np.log10(np.abs(self.cth.u0sp) ** 2))
+        self.gplot1.plot(tbc.rplot * 1e-3, np.log10(np.abs(self.u0sp) ** 2))
         self.gplot1.set_xlabel('$|u|^2$')
         self.gplot1.set_ylabel('x, $\mu$m')
 
@@ -168,7 +168,7 @@ class TBC1D_GUI:
         self.fig2, self.gplot2 = plt.subplots(figsize=(6, 6), dpi=80)
         self.gplot2.set_title(self.buf2.getvalue(), y=1.04, x=0.6)
         self.X, self.Y = np.meshgrid(tbc.zplot * 1e-6, tbc.rplot * 1e-3)
-        cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.cth.uplot) ** 2), cmap='jet')
+        cset = self.gplot2.pcolormesh(self.X, self.Y, np.log10(np.abs(self.uplot) ** 2), cmap='jet')
         self.cb = self.fig2.colorbar(cset)
         self.gplot2.set_xlabel('z, mm')
         self.gplot2.set_ylabel('x, $\mu$m')
@@ -190,7 +190,7 @@ class TBC1D_GUI:
         self.plotmenu.entryconfig("Color plot properties", state="normal")
         self.showbutton.config(state="normal")
 
-    # ------------------------------The color plot function saving the main color plot
+    # ------------------------------The function saving the main color plot
     def save_color_plot(self):
         """Saves the main color plot as a raster image"""
 
@@ -203,14 +203,20 @@ class TBC1D_GUI:
         else:
             return 1
 
-    # ------------------------------The color plot function saving the main color plot
+    # ------------------------------The function saving the main color plot data
     def save_plot_data(self):
-        """Saves the main color plot as a raster image"""
-        # ------------ Choosing the name of the image file to save results to
+        """Saves the main color plot data as a text file"""
+        # ------------ Choosing the name of the data file to save results to
         datafilename = fd.asksaveasfilename(initialdir=self.dirname, title="Choose the file to save the plot data to", \
                                              filetypes=(("data files", "*.dat"), ("text files", "*.txt"), ("all files", "*.*")))
+        # -------------If a file is chosen then writing to it
         if datafilename != '':
-            #self.fig2.savefig(imagefilename, dpi=600)
+            f = open(datafilename, "wb")
+            for cntn in np.r_[1:tbc.nuMAX]:
+                for cntm in np.r_[1:tbc.muMAX + 1]:
+                    f.write("%f6.4 ", self.uplot[cntm, cntn])
+                f.wtite("\n")
+            f.close()
             return 0
         else:
             return 1
@@ -297,15 +303,14 @@ class TBC1D_GUI:
 # ---------------------------------------------A custom class for a worker thread
 class CompThread(th.Thread):
     # Constructor
-    def __init__(self, que, id):
+    def __init__(self, que, id, outer):
         super().__init__()
-        self.uplot = None
-        self.u0sp = None
+        self.outer = outer
         self.queue = que
         self.id = id
 
     def run(self):
-        self.uplot, self.u0sp = tbc.compute_amplitude()
+        self.outer.uplot, self.outer.u0sp = tbc.compute_amplitude()
         # Filling the queue in
         self.queue.put(self.id)
 
