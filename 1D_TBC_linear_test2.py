@@ -36,7 +36,7 @@ if __name__ == '__main__':
     fq = 0.01  # Oscillation frequency
     model = 2  # The initial probability model
     kk = 0
-    N = 1  # Number of longitudinal oscialltions
+    N = 1  # Number of longitudinal oscillations
     T = N * 2 * math.pi / fq  # ---------------------------------- The external field extent
 
     MMAX = int(round(2. * RMAX / h)) - 1
